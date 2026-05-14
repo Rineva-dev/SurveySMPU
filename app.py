@@ -102,6 +102,8 @@ class SurveyResponse(db.Model):
 # -----------------------------
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
+    error = None
+
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
@@ -109,8 +111,10 @@ def admin_login():
         if username == "admin" and password == "admin123":
             session["admin"] = True
             return redirect(url_for("admin_dashboard"))
+        else:
+            error = "Username atau password salah"
 
-    return render_template("admin/login.html")
+    return render_template("admin/login.html", error=error)
 
 @app.route("/")
 def home():

@@ -1,15 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Login Admin</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body class="center">
-    <form method="POST" class="card">
-        <h2>Login Admin</h2>
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>
+
+<body>
+
+<div class="login-wrapper">
+
+    <div class="login-card">
+
+        <div class="brand">
+            <div class="logo">📊</div>
+            <h1>Survey System</h1>
+            <p>Admin Dashboard Login</p>
+        </div>
+
+        <!-- ERROR MESSAGE -->
+        {% if error %}
+        <div class="error-box">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" id="loginForm">
+
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Sign In
+            </button>
+
+        </form>
+
+        <div class="footer">
+            Secure access only
+        </div>
+
+    </div>
+
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <p>Signing in...</p>
+</div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", function () {
+    document.getElementById("loading").style.display = "flex";
+});
+</script>
+
 </body>
 </html>
