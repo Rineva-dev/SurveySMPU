@@ -54,8 +54,8 @@ body {
 }
 
 .logo img {
-    width: 70px;
-    height: 70px;
+    width: 140px;
+    height: 60px;
     object-fit: contain;
 
     border-radius: 12px;
