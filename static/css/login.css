@@ -54,14 +54,11 @@ body {
 }
 
 .logo img {
-    width: 140px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     object-fit: contain;
 
     border-radius: 12px;
-
-    /* optional biar SaaS feel */
-    background: rgba(255,255,255,0.05);
     padding: 10px;
 }
 
