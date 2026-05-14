@@ -112,6 +112,9 @@ def admin_login():
 
     return render_template("admin/login.html")
 
+@app.route("/")
+def home():
+    return redirect(url_for("admin_login"))
 
 @app.route("/dashboard")
 def admin_dashboard():
