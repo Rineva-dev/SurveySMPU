@@ -122,11 +122,29 @@ def home():
 
 @app.route("/dashboard")
 def admin_dashboard():
+
     if not session.get("admin"):
         return redirect(url_for("admin_login"))
 
+    surveys = Survey.query.all()
+
+    total_survey = Survey.query.count()
+
+    total_responden = SurveyResponse.query.count()
+
+    survey_aktif = Survey.query.filter_by(
+        is_active=True
+    ).count()
+
     return render_template(
         "admin/dashboard.html",
+
+        surveys=surveys,
+
+        total_survey=total_survey,
+        total_responden=total_responden,
+        survey_aktif=survey_aktif,
+
         active_page="dashboard"
     )
 

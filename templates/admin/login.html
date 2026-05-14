@@ -36,7 +36,26 @@
 
             <div class="input-group">
                 <label>Password</label>
-                <input type="password" name="password" placeholder="Enter your password" required>
+
+                <div class="password-wrapper">
+
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        placeholder="Enter your password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        id="togglePassword"
+                    >
+                        <i data-lucide="eye"></i>
+                    </button>
+
+                </div>
             </div>
 
             <button type="submit" class="btn-login">
@@ -59,10 +78,38 @@
     <p>Signing in...</p>
 </div>
 
+<script src="https://unpkg.com/lucide@latest"></script>
 <script>
 document.getElementById("loginForm").addEventListener("submit", function () {
     document.getElementById("loading").style.display = "flex";
 });
+
+/* =========================
+    TOGGLE PASSWORD
+========================= */
+
+const passwordInput = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
+
+togglePassword.addEventListener("click", function () {
+
+    const isPassword =
+        passwordInput.getAttribute("type") === "password";
+
+    passwordInput.setAttribute(
+        "type",
+        isPassword ? "text" : "password"
+    );
+
+    togglePassword.innerHTML = isPassword
+        ? '<i data-lucide="eye-off"></i>'
+        : '<i data-lucide="eye"></i>';
+
+    lucide.createIcons();
+});
+
+/* INIT ICON */
+lucide.createIcons();
 </script>
 
 </body>

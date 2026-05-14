@@ -248,15 +248,6 @@ html, body {
     border: none;
     cursor: pointer;
     transition: .25s ease;
-    box-shadow:
-        0 10px 20px rgba(218,124,0,0.18);
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 14px 28px rgba(218,124,0,0.22);
 }
 
 .btn:hover {
@@ -361,7 +352,7 @@ html, body {
     }
 
     .desc {
-        font-size: 1rem;
+        font-size: 14px;
         line-height: 1.65;
         text-align: left;
     }

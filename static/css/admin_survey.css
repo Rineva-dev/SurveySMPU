@@ -367,11 +367,9 @@
     gap: 16px;
 }
 
-.aksi {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
+.table-survey td.aksi{
+    text-align:center;
+    vertical-align:middle;
 }
 
 /* tombol icon */
@@ -379,10 +377,14 @@
    ACTION GROUP (SAAS STYLE)
 ========================= */
 .action-group {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    align-items: center;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+}
+
+.table-survey td{
+    vertical-align:middle;
 }
 
 /* biar form tidak ganggu layout flex */

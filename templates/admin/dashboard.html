@@ -2,53 +2,209 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<h2 class="title-header">Grafik Hasil Survey</h2>
+<h2 class="title-header">Dashboard Survey</h2>
 
-<!-- DROPDOWN PILIH SURVEY -->
-<div style="max-width: 300px; margin-bottom: 20px;">
-    <select id="surveySelect" onchange="loadChart()">
-        <option value="">-- Pilih Survey --</option>
-        {% for survey in surveys %}
-            <option value="{{ survey.id }}">{{ survey.title }}</option>
-        {% endfor %}
-    </select>
+<!-- =========================
+    STATS
+========================= -->
+<!-- =========================
+    STATS
+========================= -->
+<div class="stats-grid">
+
+    <div class="stat-card stat-green">
+
+        <div class="stat-icon green">
+            <i data-lucide="clipboard-list"></i>
+        </div>
+
+        <div class="stat-info">
+            <span class="stat-label">Total Survey</span>
+            <h3>{{ total_survey or 0 }}</h3>
+        </div>
+
+    </div>
+
+    <div class="stat-card stat-gold">
+
+        <div class="stat-icon gold">
+            <i data-lucide="users"></i>
+        </div>
+
+        <div class="stat-info">
+            <span class="stat-label">Total Responden</span>
+            <h3>{{ total_responden or 0 }}</h3>
+        </div>
+
+    </div>
+
+    <div class="stat-card stat-emerald">
+
+        <div class="stat-icon emerald">
+            <i data-lucide="badge-check"></i>
+        </div>
+
+        <div class="stat-info">
+            <span class="stat-label">Survey Aktif</span>
+            <h3>{{ survey_aktif or 0 }}</h3>
+        </div>
+
+    </div>
+
+    <div class="stat-card stat-red ">
+
+        <div class="stat-icon red">
+            <i data-lucide="archive"></i>
+        </div>
+
+        <div class="stat-info">
+            <span class="stat-label">Survey Selesai</span>
+            <h3>{{ survey_selesai or 0 }}</h3>
+        </div>
+
+    </div>
+
 </div>
 
-<!-- GRAFIK -->
-<canvas id="surveyChart" height="100"></canvas>
+<!-- =========================
+    CHART CARD
+========================= -->
+<div class="dashboard-card">
+
+    <div class="card-header-dashboard">
+        <div>
+            <h3>Grafik Hasil Survey</h3>
+            <p>Lihat distribusi jawaban responden</p>
+        </div>
+
+        <div class="select-wrapper">
+            <select id="surveySelect" onchange="loadChart()">
+                <option value="">Pilih Survey</option>
+
+                {% for survey in surveys %}
+                    <option value="{{ survey.id }}">
+                        {{ survey.title }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="chart-wrapper">
+        <canvas id="surveyChart"></canvas>
+    </div>
+
+</div>
+
+<!-- =========================
+    SURVEY TERBARU
+========================= -->
+<div class="dashboard-card">
+
+    <div class="card-header-dashboard">
+        <div>
+            <h3>Survey Terbaru</h3>
+            <p>Daftar survey terbaru yang dibuat</p>
+        </div>
+    </div>
+
+    <div class="recent-list">
+
+        {% for s in surveys[:5] %}
+        <div class="recent-item">
+
+            <div>
+                <div class="recent-title">
+                    {{ s.title }}
+                </div>
+
+                <div class="recent-sub">
+                    {{ s.total_responden or 0 }} responden
+                </div>
+            </div>
+
+            <span class="badge-status {{ 'active' if s.is_active else 'inactive' }}">
+                {{ 'Aktif' if s.is_active else 'Nonaktif' }}
+            </span>
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
 
 <!-- CHART JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+
 let chart;
 
 function loadChart() {
-    const surveyId = document.getElementById("surveySelect").value;
+
+    const surveyId =
+        document.getElementById("surveySelect").value;
+
     if (!surveyId) return;
 
-    // DATA DUMMY (NANTI DARI DATABASE)
-    const labels = ["Sangat Puas", "Puas", "Cukup", "Tidak Puas"];
+    // DATA DUMMY
+    const labels = [
+        "Sangat Puas",
+        "Puas",
+        "Cukup",
+        "Tidak Puas"
+    ];
+
     const data = [12, 25, 8, 3];
 
     if (chart) {
         chart.destroy();
     }
 
-    const ctx = document.getElementById("surveyChart").getContext("2d");
+    const ctx =
+        document.getElementById("surveyChart").getContext("2d");
+
     chart = new Chart(ctx, {
+
         type: "bar",
+
         data: {
             labels: labels,
+
             datasets: [{
                 label: "Jumlah Responden",
-                data: data
+                data: data,
+                borderRadius: 10
             }]
+        },
+
+        options: {
+            responsive: true,
+
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
         }
+
     });
 }
+
 </script>
 
 {% endblock %}
