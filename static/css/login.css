@@ -47,8 +47,22 @@ body {
 }
 
 .logo {
-    font-size: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 10px;
+}
+
+.logo img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+
+    border-radius: 12px;
+
+    /* optional biar SaaS feel */
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
 }
 
 .brand h1 {
