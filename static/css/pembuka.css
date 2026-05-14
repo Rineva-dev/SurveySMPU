@@ -5,10 +5,44 @@
 body {
     margin: 0;
     font-family: "Inter", sans-serif;
-    background: radial-gradient(circle at top, #ffffff, #e7e7e7 70%);
+
+    background:
+        linear-gradient(
+            135deg,
+            #f7f7f7 0%,
+            #ececec 100%
+        );
+
     min-height: 100vh;
+
     padding: 24px 16px;
+
     color: #000;
+
+    position: relative;
+}
+
+body::before,
+body::after{
+    content:"";
+    position: fixed;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    filter: blur(90px);
+    z-index: 0;
+}
+
+body::before{
+    background: rgba(218,124,0,0.10);
+    top: -80px;
+    left: -100px;
+}
+
+body::after{
+    background: rgba(0,60,34,0.08);
+    bottom: -100px;
+    right: -100px;
 }
 
 html, body {
@@ -28,58 +62,58 @@ html, body {
 
 .card {
     width: 100%;
-    max-width: 540px;
-
-    background: rgba(255, 255, 255, 0.101);
-    backdrop-filter: blur(18px);
-
-    border: 1px solid rgba(218, 124, 0, 0.25);
-
-    border-radius: 20px;
-    padding: 34px;
-
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.052);
+    max-width: 620px;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 28px;
+    padding: 42px;
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.06),
+        0 2px 10px rgba(0,0,0,0.03);
     text-align: center;
-
     position: relative;
     overflow: hidden;
     z-index: 1;
 }
 
-/* decorative glow */
-.card::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+/* =========================
+   SCHOOL BRAND
+========================= */
 
-    background: radial-gradient(
-        circle,
-        rgba(255, 187, 0, 0.038),
-        transparent 60%
-    );
+.school-brand{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:18px;
+    position: relative;
+    z-index: 2;
+}
 
-    transform: rotate(25deg);
+.school-logo{
+    width:200px;
+    min-height:10px;
+    object-fit:contain;
+    margin-bottom:1px;
+    filter:
+        drop-shadow(0 4px 10px rgba(0,0,0,0.08));
 }
 
 /* =========================
    BADGE
 ========================= */
-
 .badge {
-    display: inline-block;
-    padding: 6px 14px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
     font-size: 12px;
-
-    background: rgb(255, 255, 255);
-    color: #ffcc80;
-
-    border: 1px solid rgba(218, 124, 0, 0.3);
-
+    font-weight: 700;
+    background: rgba(255, 235, 209, 0.1);
+    color: #ff981a;
+    border: 1px solid rgba(255, 173, 49, 0.603);
     border-radius: 999px;
-    margin-bottom: 0;
+    margin-bottom: 2px;
+    letter-spacing: .4px;
 }
 
 /* =========================
@@ -87,11 +121,11 @@ html, body {
 ========================= */
 
 .title {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 10px;
-
-    color: #000000;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    color: #111111;
 }
 
 /* =========================
@@ -101,63 +135,128 @@ html, body {
 .desc {
     font-size: 14px;
     line-height: 1.7;
-
     color: #000000!important;
     margin-bottom: 22px;
     text-align: justify;
 }
 
 /* =========================
-   INFO BOX
+   DATE BOX
 ========================= */
 
-.info-box {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    background: #ffffff;
-    border: 1px solid rgba(255, 166, 0, 0.086);
-    padding: 14px 16px;
-    border-radius: 12px;
-    margin-bottom: 26px;
+.date-box{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+
+    margin-bottom:28px;
 }
 
-.info-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* =========================
+   DATE CARD
+========================= */
+
+.date-card{
+    background:
+        rgba(255,255,255,0.78);
+
+    border:
+        1px solid rgba(0,0,0,0.05);
+
+    border-radius:18px;
+
+    padding:18px 20px;
+
+    text-align:center;
+
+    transition:.25s ease;
+
+    position:relative;
+    overflow:hidden;
 }
 
-.label {
-    font-size: 12px;
-    color: rgb(0, 0, 0);
+/* top accent */
+.date-card::before{
+    content:"";
+
+    position:absolute;
+    top:0;
+    left:0;
+
+    width:100%;
+    height:3px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #da7c00,
+            #ffb74d
+        );
 }
 
-.value {
-    font-size: 14px;
-    font-weight: 600;
-    color: #000000;
+/* hover */
+.date-card:hover{
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 10px 24px rgba(0,0,0,0.05);
+}
+
+/* =========================
+   LABEL
+========================= */
+
+.date-label{
+    font-size:12px;
+    font-weight:600;
+    color:#ffa425;
+    margin-bottom:2px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+}
+
+/* =========================
+   VALUE
+========================= */
+
+.date-value{
+    font-size:15px;
+    font-weight:700;
+
+    color:#111;
+
+    line-height:1.5;
 }
 
 /* =========================
    BUTTON (PRIMARY BRAND)
 ========================= */
-
 .btn {
     display: inline-block;
     width: 100%;
-    padding: 13px;
-
-    background: linear-gradient(135deg, #da7c00, #ffb74d);
+    padding: 16px;
+    background:
+        linear-gradient(
+            135deg,
+            #ff991d,
+            #ffbe5c
+        );
     color: #ffffff;
-
+    font-size: 15px;
     font-weight: 700;
-    text-decoration: none;
-
-    border-radius: 14px;
+    border-radius: 16px;
     border: none;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: .25s ease;
+    box-shadow:
+        0 10px 20px rgba(218,124,0,0.18);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 14px 28px rgba(218,124,0,0.22);
 }
 
 .btn:hover {
@@ -267,9 +366,24 @@ html, body {
         text-align: left;
     }
 
-    .info-box {
-        gap: 12px;
-        padding: 14px;
+    .date-box{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+    }
+
+    .date-card{
+        padding:14px 10px;
+        border-radius:14px;
+    }
+
+    .date-label{
+        font-size:10px;
+        margin-bottom:1px;
+    }
+
+    .date-value{
+        font-size:12px;
+        line-height:1.4;
     }
 
     .btn {

@@ -13,7 +13,33 @@ body {
     justify-content: center;
     align-items: center;
 
-    background: linear-gradient(135deg, #0f172a, #1e293b, #0b1220);
+    /* 🔥 gradient premium 3 arah */
+    background: radial-gradient(
+        circle at top left,
+        #03150f 0%,
+        #062c17 35%,
+        #042d1a 60%,
+        #04120d 100%
+    );
+
+    position: relative;
+    overflow: hidden;
+}
+
+/* soft glow kiri */
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: linear-gradient(
+        135deg,
+        rgba(253, 177, 0, 0.03),
+        transparent 40%,
+        rgba(0, 64, 37, 0.05)
+    );
+
+    pointer-events: none;
 }
 
 /* WRAPPER */
@@ -27,17 +53,27 @@ body {
 /* CARD GLASS */
 .login-card {
     width: 380px;
-    padding: 40px;
+    padding: 42px;
 
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.942);
+    backdrop-filter: blur(25px);
 
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(253, 177, 0, 0.18);
+
     border-radius: 18px;
 
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow:
+        0 30px 90px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.05);
 
-    color: white;
+    color: rgb(0, 0, 0);
+
+    transform: translateY(0);
+    transition: 0.3s ease;
+}
+
+.login-card:hover {
+    transform: translateY(-3px);
 }
 
 /* BRAND */
@@ -63,13 +99,14 @@ body {
 }
 
 .brand h1 {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
 }
 
 .brand p {
-    font-size: 13px;
-    opacity: 0.7;
+    font-size: 12px;
+    opacity: 0.65;
 }
 
 /* INPUT */
@@ -86,22 +123,42 @@ body {
 
 .input-group input {
     width: 100%;
-    padding: 12px 14px;
+    padding: 13px 14px;
 
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
 
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
+    border: 1px solid rgba(253, 177, 0, 0.18);
+
+    background: rgba(0, 0, 0, 0.03);
+
+    color: #0b2a1b;
+
+    font-size: 14px;
+
+    transition: all 0.25s ease;
 
     outline: none;
-
-    transition: 0.2s;
 }
 
+/* PLACEHOLDER STYLE */
+.input-group input::placeholder {
+    color: rgba(0, 0, 0, 0.35);
+    font-size: 13px;
+    letter-spacing: 0.2px;
+}
+
+/* FOCUS STATE */
 .input-group input:focus {
-    border-color: #60a5fa;
-    background: rgba(255, 255, 255, 0.08);
+    border-color: #FDB100;
+
+    background: rgba(253, 177, 0, 0.06);
+
+    box-shadow: 0 0 0 4px rgba(253, 177, 0, 0.12);
+}
+
+/* HOVER (biar hidup sedikit) */
+.input-group input:hover {
+    border-color: rgba(253, 177, 0, 0.35);
 }
 
 /* BUTTON */
@@ -110,20 +167,21 @@ body {
     padding: 12px;
 
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
 
-    background: linear-gradient(90deg, #3b82f6, #6366f1);
-    color: white;
+    background: #FDB100;
+    color: #0b2a1b;
 
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+
     cursor: pointer;
 
-    transition: 0.2s;
+    transition: all 0.25s ease;
 }
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
 }
 
 /* FOOTER */
@@ -136,12 +194,12 @@ body {
 
 /* ERROR BOX */
 .error-box {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.25);
     color: #fecaca;
 
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 12px;
 
     font-size: 13px;
     margin-bottom: 15px;
@@ -153,8 +211,8 @@ body {
     position: fixed;
     inset: 0;
 
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(10px);
 
     display: none;
     flex-direction: column;
@@ -165,17 +223,16 @@ body {
     z-index: 9999;
 }
 
-/* SPINNER */
 .spinner {
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
 
-    border: 4px solid rgba(255,255,255,0.2);
-    border-top: 4px solid #60a5fa;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top: 3px solid #FDB100;
+
     border-radius: 50%;
 
-    animation: spin 1s linear infinite;
-    margin-bottom: 12px;
+    animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {
