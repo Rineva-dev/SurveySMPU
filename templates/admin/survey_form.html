@@ -1,0 +1,794 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Tambah Survey{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h2 class="title-header" style="margin-bottom: 5px;">Tambah Survey</h2>
+    <p class="page-subtitle">
+        Buat survey baru untuk kebutuhan evaluasi dan pengembangan sekolah
+    </p>
+</div>
+
+<div class="page-container">
+
+    <!-- FORM SURVEY -->
+    <form method="POST">
+
+        <!-- ===============================
+             INFORMASI SURVEY
+        ================================ -->
+        <div class="card">
+
+            <div class="form-group">
+                <label>Judul Survey</label>
+                <input
+                    type="text"
+                    name="title"
+                    value="{{ survey.title if survey else '' }}"
+                    placeholder="Contoh: Survey Penguatan Karakter Siswa"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Kata Pembuka</label>
+                <div id="editor-pembuka" style="height: 180px;" placeholder="Tuliskan pengantar survey untuk responden..."></div>
+                <input type="hidden" name="pembuka" id="pembuka-input">
+            </div>
+
+            <div class="form-row-2">
+
+                <!-- START DATE -->
+                <div class="date-card">
+                    <label>Tanggal Mulai</label>
+                    <div class="date-input">
+                        <input type="date" name="start_date" value="{{ survey.start_date if survey else '' }}" required>
+                    </div>
+                </div>
+
+                <!-- END DATE -->
+                <div class="date-card">
+                    <label>Tanggal Selesai</label>
+                    <div class="date-input">
+                        <input type="date" name="end_date" value="{{ survey.end_date if survey else '' }}" required>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===============================
+                UNSUR RESPONDEN
+            ================================ -->
+            <div class="form-group">
+
+                <label>Unsur Responden</label>
+
+                <div class="unsur-wrapper">
+
+                    <div class="unsur-input-row">
+
+                        <input
+                            type="text"
+                            id="unsur-input"
+                            placeholder="Contoh: Orang Tua"
+                        >
+
+                        <button
+                            type="button"
+                            class="btn-add-unsur"
+                            onclick="addUnsur()"
+                        >
+                            Tambah
+                        </button>
+
+                    </div>
+
+                    <!-- LIST -->
+                    <div id="unsur-list" class="unsur-list">
+
+                        <!-- Default -->
+                        <div class="unsur-item">
+                            <span>Semua</span>
+
+                            <input
+                                type="hidden"
+                                name="unsur_responden[]"
+                                value="Semua"
+                            >
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <small class="form-hint">
+                    Jika hanya ada "Semua", maka dropdown unsur responden tidak tampil di halaman survey.
+                </small>
+
+            </div>
+
+        </div>
+
+        <!-- ===============================
+            SESSION PERTANYAAN
+        =============================== -->
+        <div class="card">
+
+            <div class="section-header">
+
+                <h3>Session Pertanyaan</h3>
+
+                <button
+                    type="button"
+                    class="btn-primary add-session-btn"
+                    onclick="addSession()"
+                >
+                    + Tambah Session
+                </button>
+
+            </div>
+
+            <div id="session-container"></div>
+
+        </div>
+
+        <template id="question-template">
+
+            <div class="question-card" data-index="">
+                <button
+                    type="button"
+                    class="btn-remove-question"
+                    onclick="removeQuestion(this)"
+                >
+                    ×
+                </button>
+
+                <div class="form-group">
+
+                    <label>Pertanyaan</label>
+
+                    <textarea
+                        name="pertanyaan[]"
+                        rows="2"
+                        required
+                    ></textarea>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Jenis Jawaban</label>
+
+                    <select onchange="handleAnswerType(this)">
+
+                        <option value="">
+                            -- Pilih --
+                        </option>
+
+                        <option value="isian">
+                            Isian
+                        </option>
+
+                        <option value="pilihan">
+                            Pilihan
+                        </option>
+
+                    </select>
+
+                    <input type="hidden" class="question-type">
+
+                </div>
+
+                <!-- ISIAN -->
+                <div class="answer-box hidden">
+
+                    <label>Jawaban</label>
+
+                    <div class="form-group">
+
+                        <label>Jumlah Kolom Isian</label>
+
+                        <input
+                            type="number"
+                            name="count[]"
+                            class="question-count"
+                            min="1"
+                            value="1"
+                        >
+
+                    </div>
+
+                </div>
+
+                <!-- PILIHAN -->
+                <div class="answer-box hidden">
+
+                    <label>Pilihan Jawaban</label>
+
+                    <div class="answer-list">
+
+                        <div class="answer-row">
+
+                            <span class="option-label">
+                                a.
+                            </span>
+
+                            <input
+                                type="hidden"
+                                name="option_label[0][]"
+                                value="a"
+                            >
+
+                            <input
+                                type="text"
+                                name="option_text[0][]"
+                                placeholder="Pilihan a"
+                            >
+
+                            <button
+                                type="button"
+                                onclick="addAnswer(this)"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <div class="radio-group">
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="mode[]"
+                                value="single"
+                            >
+                            Satu pilihan
+                        </label>
+
+                        <label>
+                            <input
+                                type="radio"
+                                name="mode[]"
+                                value="multiple"
+                            >
+                            Lebih dari satu
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group required-toggle">
+                    <label>Wajib Diisi?</label>
+
+                    <label class="switch-check">
+                        <input type="checkbox" name="is_required[]" value="1">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+            </div>
+
+        </template>
+
+        <template id="session-template">
+
+            <div class="session-card">
+
+                <div class="session-header">
+
+                    <input
+                        type="text"
+                        name="session_title[]"
+                        class="session-title"
+                        placeholder="Nama Session"
+                    >
+
+                    <button
+                        type="button"
+                        class="btn-remove-session"
+                        onclick="removeSession(this)"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <div class="session-question-container"></div>
+
+                <div class="session-footer">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        onclick="addQuestion(this)"
+                    >
+                        + Tambah Pertanyaan
+                    </button>
+
+                </div>
+
+            </div>
+
+        </template>
+
+        <!-- ===============================
+            ACTION BUTTON
+        ================================ -->
+        <div class="action-bar">
+            <button type="submit" class="btn-primary">
+                {% if is_edit %}
+                    Update Survey
+                {% else %}
+                    Simpan Survey
+                {% endif %}
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+let globalQuestionIndex = 0;
+
+function addQuestion(button) {
+
+    const sessionCard =
+        button.closest('.session-card');
+
+    const container =
+        sessionCard.querySelector(
+            '.session-question-container'
+        );
+
+    const template =
+        document.getElementById(
+            'question-template'
+        );
+
+    const clone =
+        template.content.cloneNode(true);
+
+    const card =
+        clone.querySelector('.question-card');
+
+    const qIndex = globalQuestionIndex++;
+
+    card.dataset.index = qIndex;
+
+    // textarea
+    const textarea =
+        card.querySelector(
+            'textarea[name="pertanyaan[]"]'
+        );
+
+    textarea.name = 'pertanyaan[]';
+
+    // type
+    const typeInput =
+        card.querySelector('.question-type');
+
+    typeInput.name = 'type[]';
+
+    // count
+    const countInput =
+        card.querySelector('.question-count');
+
+    if (countInput) {
+        countInput.name = 'count[]';
+    }
+
+    // mode
+    const radios =
+        card.querySelectorAll(
+            'input[type="radio"]'
+        );
+
+    radios.forEach(r => {
+        r.name = `mode[${qIndex}]`;
+    });
+
+    // hidden session
+    const hiddenSession =
+        document.createElement('input');
+
+    hiddenSession.type = 'hidden';
+
+    hiddenSession.name = 'question_session[]';
+
+    hiddenSession.value =
+        [...document.querySelectorAll('.session-card')]
+        .indexOf(sessionCard);
+
+    card.appendChild(hiddenSession);
+
+    container.appendChild(clone);
+}
+
+function addSession() {
+
+    const container =
+        document.getElementById(
+            'session-container'
+        );
+
+    const template =
+        document.getElementById(
+            'session-template'
+        );
+
+    const clone =
+        template.content.cloneNode(true);
+
+    container.appendChild(clone);
+}
+
+function removeSession(btn) {
+
+    const session =
+        btn.closest('.session-card');
+
+    session.remove();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    addSession();
+});
+
+function handleAnswerType(select) {
+    const card = select.closest('.question-card');
+    const boxes = card.querySelectorAll('.answer-box');
+
+    boxes.forEach(b => b.classList.add('hidden'));
+
+    const typeInput = card.querySelector('.question-type');
+    const countInput = card.querySelector('.question-count');
+    if (typeInput) {
+        typeInput.value = select.value;
+    }
+
+    if (select.value === 'isian') {
+        boxes[0].classList.remove('hidden');
+    }
+
+    if (select.value === 'pilihan') {
+        boxes[1].classList.remove('hidden');
+    }
+    if (countInput) {
+        countInput.name = "count[]";
+    }
+}
+
+function getOptionLabel(index) {
+    return String.fromCharCode(97 + index);
+}
+
+function addAnswer(btn) {
+    const list = btn.closest('.answer-list');
+    const card = btn.closest('.question-card');
+    const qIndex = card.dataset.index;
+
+    const rows = list.querySelectorAll('.answer-row');
+    const label = String.fromCharCode(97 + rows.length); // a,b,c
+
+    const row = document.createElement('div');
+    row.className = 'answer-row';
+
+    row.innerHTML = `
+        <span class="option-label">${label}.</span>
+
+        <input type="hidden" name="option_label[${qIndex}][]" value="${label}">
+        <input type="text" name="option_text[${qIndex}][]" placeholder="Pilihan ${label}">
+
+        <button type="button" onclick="addAnswer(this)">+</button>
+    `;
+
+    list.appendChild(row);
+}
+
+function refreshLabels(list) {
+    const rows = list.querySelectorAll('.answer-row');
+
+    rows.forEach((row, i) => {
+        const label = String.fromCharCode(97 + i);
+        row.querySelector('span').innerText = label + ".";
+    });
+}
+
+const quill = new Quill('#editor-pembuka', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+
+            [{ list: 'ordered' }, { list: 'bullet' }],
+
+            [{ indent: '-1' }, { indent: '+1' }],   // 🔥 INI PENTING
+
+            ['clean']
+        ]
+    }
+});
+
+document.querySelector("form").addEventListener("submit", function () {
+    document.getElementById("pembuka-input").value = quill.root.innerHTML;
+});
+
+function addUnsur() {
+
+    const input = document.getElementById('unsur-input');
+    const list = document.getElementById('unsur-list');
+
+    const value = input.value.trim();
+
+    if (!value) return;
+
+    // cek duplikat
+    const existing = [
+        ...list.querySelectorAll('input[name="unsur_responden[]"]')
+    ].map(i => i.value.toLowerCase());
+
+    if (existing.includes(value.toLowerCase())) {
+        alert('Unsur sudah ada');
+        return;
+    }
+
+    // hapus "Semua" kalau masih ada
+    const semuaItem = [...list.querySelectorAll('.unsur-item')]
+        .find(item =>
+            item.querySelector('input').value === 'Semua'
+        );
+
+    if (semuaItem) {
+        semuaItem.remove();
+    }
+
+    const div = document.createElement('div');
+
+    div.className = 'unsur-item';
+
+    div.innerHTML = `
+        <span>${value}</span>
+
+        <input
+            type="hidden"
+            name="unsur_responden[]"
+            value="${value}"
+        >
+
+        <button
+            type="button"
+            class="remove-unsur"
+            onclick="removeUnsur(this)"
+        >
+            ×
+        </button>
+    `;
+
+    list.appendChild(div);
+
+    input.value = '';
+}
+
+function removeUnsur(btn) {
+
+    const item = btn.closest('.unsur-item');
+    item.remove();
+
+    const list = document.getElementById('unsur-list');
+
+    const items = list.querySelectorAll('.unsur-item');
+
+    // kalau kosong → balik ke Semua
+    if (items.length === 0) {
+
+        list.innerHTML = `
+            <div class="unsur-item">
+                <span>Semua</span>
+
+                <input
+                    type="hidden"
+                    name="unsur_responden[]"
+                    value="Semua"
+                >
+            </div>
+        `;
+    }
+}
+function removeQuestion(btn) {
+    const question = btn.closest('.question-card');
+    question.remove();
+}
+
+{% if is_edit %}
+
+const existingSurvey = {
+    unsur: {{ survey.unsur_responden|safe }},
+    sessions: {{ survey.questions|safe }}
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+
+    // reset default
+    document.getElementById('session-container').innerHTML = '';
+
+    // title
+    document.querySelector('input[name="title"]').value =
+        `{{ survey.title }}`;
+
+    // date
+    document.querySelector('input[name="start_date"]').value =
+        `{{ survey.start_date }}`;
+
+    document.querySelector('input[name="end_date"]').value =
+        `{{ survey.end_date }}`;
+
+    // quill
+    quill.root.innerHTML = `{{ survey.description|safe }}`;
+
+    // unsur
+    const unsurList =
+        document.getElementById('unsur-list');
+
+    unsurList.innerHTML = '';
+
+    existingSurvey.unsur.forEach(u => {
+
+        const div = document.createElement('div');
+
+        div.className = 'unsur-item';
+
+        div.innerHTML = `
+            <span>${u}</span>
+
+            <input
+                type="hidden"
+                name="unsur_responden[]"
+                value="${u}"
+            >
+
+            <button
+                type="button"
+                class="remove-unsur"
+                onclick="removeUnsur(this)"
+            >
+                ×
+            </button>
+        `;
+
+        unsurList.appendChild(div);
+
+    });
+
+    // sessions
+    existingSurvey.sessions.forEach((sessionData, sIndex) => {
+
+        addSession();
+
+        const sessions =
+            document.querySelectorAll('.session-card');
+
+        const currentSession =
+            sessions[sessions.length - 1];
+
+        currentSession.querySelector(
+            '.session-title'
+        ).value = sessionData.title;
+
+        const addBtn =
+            currentSession.querySelector(
+                '.btn-secondary'
+            );
+
+        sessionData.questions.forEach(q => {
+
+            addQuestion(addBtn);
+
+            const questions =
+                currentSession.querySelectorAll(
+                    '.question-card'
+                );
+
+            const currentQuestion =
+                questions[questions.length - 1];
+
+            currentQuestion.querySelector(
+                'textarea'
+            ).value = q.text;
+
+            const select =
+                currentQuestion.querySelector(
+                    'select'
+                );
+
+            select.value = q.type;
+
+            // ===== SET REQUIRED SWITCH =====
+            const requiredCheckbox =
+                currentQuestion.querySelector(
+                    'input[type="checkbox"][name="is_required[]"]'
+                );
+
+            if (requiredCheckbox) {
+                requiredCheckbox.checked = !!q.is_required;
+            }
+
+            handleAnswerType(select);
+
+            currentQuestion.querySelector(
+                '.question-type'
+            ).value = q.type;
+
+            // isian
+            if(q.type === 'isian'){
+
+                currentQuestion.querySelector(
+                    '.question-count'
+                ).value = q.count || 1;
+            }
+
+            // pilihan
+            if(q.type === 'pilihan'){
+
+                const answerList =
+                    currentQuestion.querySelector(
+                        '.answer-list'
+                    );
+
+                answerList.innerHTML = '';
+
+                q.options.forEach((opt, i) => {
+
+                    const label =
+                        opt.label || String.fromCharCode(97 + i);
+
+                    const row =
+                        document.createElement('div');
+
+                    row.className = 'answer-row';
+
+                    row.innerHTML = `
+                        <span class="option-label">
+                            ${label}.
+                        </span>
+
+                        <input
+                            type="hidden"
+                            name="option_label[${currentQuestion.dataset.index}][]"
+                            value="${label}"
+                        >
+
+                        <input
+                            type="text"
+                            name="option_text[${currentQuestion.dataset.index}][]"
+                            value="${opt.text}"
+                        >
+
+                        <button
+                            type="button"
+                            onclick="addAnswer(this)"
+                        >
+                            +
+                        </button>
+                    `;
+
+                    answerList.appendChild(row);
+
+                });
+
+            }
+
+        });
+
+    });
+
+});
+
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Survey{% endblock %}
+
+{% block content %}
+
+<h2 class="title-header">Manajemen Survey</h2>
+
+<div class="filter-container guru-filter-bar">
+    <div class="page-header">
+        <a href="{{ url_for('admin_survey_tambah') }}" class="btn-primary">Tambah Survey</a>
+    </div>
+</div>
+
+<table class="table table-survey">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Judul Survey</th>
+            <th>Tanggal</th>
+            <th>Jumlah Responden</th>
+            <th>Status</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in surveys %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.title }}</td>
+            <td>
+                <div class="tanggal-box">
+                    <div class="tanggal-item">
+                        <span class="label">Mulai</span>
+                        <span class="value">{{ format_date(s.start_date) }}</span>
+                    </div>
+                    <div class="tanggal-item">
+                        <span class="label">Berakhir</span>
+                        <span class="value">{{ format_date(s.end_date) }}</span>
+                    </div>
+                </div>
+            </td>
+            <td>
+                {{ s.total_responden or 0 }}
+            </td>
+            <td class="status">
+                <form action="/admin/survey/{{ s.id }}/toggle" method="post">
+                    <button class="switch {{ 'on' if s.is_active else 'off' }}" type="submit">
+                        <span class="label on-text">ON</span>
+                        <span class="knob"></span>
+                        <span class="label off-text">OFF</span>
+                    </button>
+                </form>
+            </td>
+            <td class="aksi">
+
+                <div class="action-group">
+
+                    <!-- SHARE -->
+                    <button type="button"
+                        class="icon-btn share"
+                        title="Share"
+                        onclick="openShareModal('{{ request.host_url }}survey/{{ s.id }}/pembuka')">
+                        <i data-lucide="share-2"></i>
+                    </button>
+
+                    <!-- EDIT -->
+                    <button type="button"
+                        class="icon-btn edit"
+                        title="Edit"
+                        onclick="window.location.href='{{ url_for("edit_survey", survey_id=s.id) }}'">
+                        <i data-lucide="edit"></i>
+                    </button>
+
+                    <!-- DELETE -->
+                    <form action="/admin/survey/{{ s.id }}/hapus"
+                        method="post"
+                        class="inline-form"
+                        onsubmit="return confirm('Yakin ingin menghapus survey ini?')">
+
+                        <button type="submit"
+                            class="icon-btn delete"
+                            title="Hapus">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </form>
+
+                    <button type="button"
+                        class="icon-btn download"
+                        title="Download Excel"
+                        onclick="window.location.href='/admin/survey/{{ s.id }}/download'">
+
+                        <i data-lucide="download"></i>
+
+                    </button>
+
+                </div>
+
+            </td>
+        </tr>
+        {% endfor %}
+    
+    <div id="toast" class="toast hidden">
+        <i data-lucide="check-circle"></i>
+        <span>Link berhasil disalin</span>
+    </div>
+    </tbody>
+</table>
+
+<div id="shareModal" class="modal hidden">
+    <div class="share-modal-box">
+
+        <!-- HEADER -->
+        <div class="share-header">
+            <div class="share-icon">
+                <i data-lucide="share-2"></i>
+            </div>
+            <div>
+                <h3>Bagikan Survey</h3>
+                <p>Salin link di bawah untuk dibagikan ke responden</p>
+            </div>
+        </div>
+
+        <!-- LINK -->
+        <div class="share-input-group">
+            <input type="text" id="shareLink" readonly>
+            <button class="copy-btn" onclick="copyLink()">
+                <i data-lucide="copy"></i>
+            </button>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="share-footer">
+            <button class="btn-secondary" onclick="closeShareModal()">
+                Tutup
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function openShareModal(link) {
+    document.getElementById("shareModal").classList.remove("hidden");
+    document.getElementById("shareLink").value = link;
+    lucide.createIcons();
+}
+
+function closeShareModal() {
+    document.getElementById("shareModal").classList.add("hidden");
+}
+
+function showToast(message = "Link berhasil disalin") {
+    const toast = document.getElementById("toast");
+    toast.querySelector("span").innerText = message;
+
+    toast.classList.remove("hidden");
+    toast.classList.add("show");
+
+    lucide.createIcons();
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+        toast.classList.add("hidden");
+    }, 2500);
+}
+
+function copyLink() {
+    const input = document.getElementById("shareLink");
+    input.select();
+    input.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast();
+    });
+
+    const btn = document.querySelector(".copy-btn");
+    btn.innerHTML = "✓";
+    setTimeout(() => {
+        btn.innerHTML = '<i data-lucide="copy"></i>';
+        lucide.createIcons();
+    }, 1200);
+}
+</script>
+{% endblock %}

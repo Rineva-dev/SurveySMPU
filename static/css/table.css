@@ -1,0 +1,76 @@
+.table-survey {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* HEADER */
+.table-survey th {
+    background: linear-gradient(
+        90deg,
+        #003c22 0%,
+        #004225 50%,
+        #004b2a 100%
+    );
+    color: #fff;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center!important;
+}
+
+.table-survey thead tr {
+    box-shadow: inset 0 -2px 0 rgba(255,255,255,0.15);
+}
+
+/* CELL */
+.table-survey td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+
+/* HOVER */
+.table-survey tbody tr:hover {
+    background: rgba(0, 60, 34, 0.08);
+}
+
+/* KOLOM NO */
+.table-survey th:nth-child(1),
+.table-survey td:nth-child(1) {
+    width: 20px;
+    text-align: center;
+}
+
+/* KOLOM JUDUL */
+.table-survey th:nth-child(2),
+.table-survey td:nth-child(2) {
+    width: 500px;
+    text-align: left;
+    word-wrap: break-word;
+}
+
+/* KOLOM AKSI */
+.table-survey th:nth-child(3),
+.table-survey td:nth-child(3) {
+    width: 120px;
+    text-align: center;
+}
+
+.table-survey th:nth-child(4),
+.table-survey td:nth-child(4) {
+    width: 70px;
+    text-align: center;
+}
+
+.table-survey th:nth-child(5),
+.table-survey td:nth-child(5) {
+    width: 100px;
+    text-align: center;
+}
+
+.table-survey th:nth-child(6),
+.table-survey td:nth-child(6) {
+    width: 130px;
+    text-align: center;
+}

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ survey.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/css/pembuka.css">
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="card">
+
+        <div class="badge">Survey</div>
+
+        <h1 class="title">{{ survey.title }}</h1>
+
+        <div class="divider"></div>
+
+        <div class="desc">
+            {{ survey.description | safe }}
+        </div>
+
+        <div class="info-box">
+            <div class="info-item">
+                <span class="label">Mulai</span>
+                <span class="value">{{ format_date(survey.start_date) }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="label">Selesai</span>
+                <span class="value">{{ format_date(survey.end_date) }}</span>
+            </div>
+        </div>
+
+        <form method="POST" action="/survey/{{ survey.id }}/start">
+            <button type="submit" class="btn">
+                Mulai Survey
+            </button>
+        </form>
+
+    </div>
+
+</div>
+</body>
+</html>

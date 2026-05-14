@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+
+            font-family:'Inter', sans-serif;
+
+            min-height:100vh;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            padding:20px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f8fafc 0%,
+                    #eef2ff 100%
+                );
+        }
+
+        .closed-card{
+
+            width:100%;
+            max-width:520px;
+
+            background:white;
+
+            border-radius:24px;
+
+            padding:42px 36px;
+
+            text-align:center;
+
+            border:1px solid #e2e8f0;
+
+            box-shadow:
+                0 12px 30px rgba(15,23,42,.08);
+        }
+
+        .icon{
+
+            width:74px;
+            height:74px;
+
+            margin:0 auto 24px;
+
+            border-radius:50%;
+
+            display:flex;
+            align-items:center;
+            justify-content:center;
+
+            font-size:34px;
+
+            background:#fef2f2;
+            color:#dc2626;
+        }
+
+        .icon.tutup{
+            background:#fef2f2;
+            color:#dc2626;
+        }
+
+        .icon.belum{
+            background:#fff7ed;
+            color:#ea580c;
+        }
+
+        h1{
+
+            font-size:28px;
+            font-weight:700;
+
+            color:#0f172a;
+
+            margin-bottom:14px;
+        }
+
+        p{
+
+            color:#64748b;
+
+            line-height:1.8;
+
+            font-size:15px;
+        }
+
+        .survey-title{
+
+            margin-top:20px;
+
+            font-size:15px;
+            font-weight:600;
+
+            color:#334155;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div class="closed-card">
+
+    <div class="icon">
+        {% if survey.status == "belum_mulai" %}
+            ⏳
+        {% else %}
+            !
+        {% endif %}
+    </div>
+
+    {% if survey.status == "belum_mulai" %}
+        <h1>Survey Belum Dimulai</h1>
+        <p>
+            Survey ini belum dibuka.<br>
+            Silakan kembali pada tanggal:
+            <br><br>
+            <strong>{{ format_date(survey.start_date) }}</strong>
+        </p>
+    {% elif survey.status == "tutup" %}
+        <h1>Survey Telah Berakhir</h1>
+        <p>
+            Terima kasih atas minat Anda.<br>
+            Survey ini telah ditutup pada:
+            <br><br>
+            <strong>{{ format_date(survey.end_date) }}</strong>
+        </p>
+    {% else %}
+        <h1>Survey Tidak Aktif</h1>
+        <p>
+            Survey ini sedang tidak tersedia.
+            Silakan hubungi admin.
+        </p>
+    {% endif %}
+
+    <div class="survey-title">
+        {{ survey.title }}
+    </div>
+
+</div>
+
+</body>
+</html>

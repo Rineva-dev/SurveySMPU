@@ -1,0 +1,54 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<h2 class="title-header">Grafik Hasil Survey</h2>
+
+<!-- DROPDOWN PILIH SURVEY -->
+<div style="max-width: 300px; margin-bottom: 20px;">
+    <select id="surveySelect" onchange="loadChart()">
+        <option value="">-- Pilih Survey --</option>
+        {% for survey in surveys %}
+            <option value="{{ survey.id }}">{{ survey.title }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- GRAFIK -->
+<canvas id="surveyChart" height="100"></canvas>
+
+<!-- CHART JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let chart;
+
+function loadChart() {
+    const surveyId = document.getElementById("surveySelect").value;
+    if (!surveyId) return;
+
+    // DATA DUMMY (NANTI DARI DATABASE)
+    const labels = ["Sangat Puas", "Puas", "Cukup", "Tidak Puas"];
+    const data = [12, 25, 8, 3];
+
+    if (chart) {
+        chart.destroy();
+    }
+
+    const ctx = document.getElementById("surveyChart").getContext("2d");
+    chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Jumlah Responden",
+                data: data
+            }]
+        }
+    });
+}
+</script>
+
+{% endblock %}

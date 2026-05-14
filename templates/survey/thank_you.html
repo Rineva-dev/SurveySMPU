@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Terima Kasih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thank-card {
+            background: #ffffff;
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 32px;
+            border-radius: 18px;
+            box-shadow: 0 25px 50px rgba(0,0,0,.08);
+            text-align: center;
+            animation: fadeUp .6s ease;
+        }
+
+        .icon {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: white;
+            font-size: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 12px;
+            color: #111827;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #6b7280;
+            margin-bottom: 28px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 22px;
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all .2s ease;
+        }
+
+        .btn:hover {
+            background: #4338ca;
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .thank-card {
+                padding: 32px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="thank-card">
+        <div class="icon">✓</div>
+
+        <h1>Terima Kasih 🙏</h1>
+
+        <p>
+            Partisipasi Anda sangat berarti bagi kami.
+            Jawaban yang Anda berikan akan digunakan sebagai bahan
+            evaluasi dan peningkatan kualitas layanan ke depan.
+        </p>
+
+        <a href="/" class="btn">
+            Kembali ke Beranda
+        </a>
+    </div>
+
+</body>
+</html>
