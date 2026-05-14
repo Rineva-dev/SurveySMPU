@@ -10,6 +10,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -28,25 +33,61 @@
         </a>
 
         <a href="/survey"
-           class="menu-item {% if active_page == 'survey' %}active{% endif %}">
+            class="menu-item {% if active_page == 'survey' %}active{% endif %}">
             <img src="{{ url_for('static', filename='img/survey.png') }}" class="menu-icon">
             <span>Survey</span>
         </a>
+    </div>
 
+    <div class="sidebar-footer">
+        <a href="/logout" class="logout-btn-modern">
+            <i data-lucide="log-out"></i>
+            <span>Logout</span>
+        </a>
     </div>
 </div>
 
-<!-- HEADER ADMIN -->
-<!-- HEADER ADMIN -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <div class="admin-header">
 
-    <div class="admin-title">
-        <div class="admin-main-title">Admin Survey</div>
-        <div class="admin-sub-title"><span class="dot"></span>SMP Unggulan Hamzanwadi</div>
+    <!-- LEFT -->
+    <div class="header-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i data-lucide="menu"></i>
+        </button>
+        <div class="header-title-wrap">
+            <div class="admin-main-title">
+                Dashboard
+            </div>
+
+            <div class="admin-sub-title">
+                <span class="dot"></span>
+                Sistem Survey Sekolah
+            </div>
+        </div>
+
     </div>
 
-    <div class="admin-profile">
-        <img src="{{ url_for('static', filename='img/profile.png') }}" alt="Profile">
+    <!-- RIGHT -->
+    <div class="header-right">
+
+        <!-- SEARCH -->
+        <div class="header-search">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Cari...">
+        </div>
+
+        <!-- NOTIFICATION -->
+        <button class="header-action-btn">
+            <i data-lucide="bell"></i>
+        </button>
+
+        <!-- PROFILE -->
+        <div class="admin-profile">
+            <img src="{{ url_for('static', filename='img/profile.png') }}">
+        </div>
+
     </div>
 
 </div>
@@ -58,6 +99,24 @@
 <script>
     lucide.createIcons();
 </script>
+<script>
 
+    lucide.createIcons();
+
+    const sidebar = document.querySelector(".sidebar");
+    const overlay = document.getElementById("sidebarOverlay");
+    const menuBtn = document.getElementById("mobileMenuBtn");
+
+    menuBtn.addEventListener("click", () => {
+        sidebar.classList.add("show");
+        overlay.classList.add("show");
+    });
+
+    overlay.addEventListener("click", () => {
+        sidebar.classList.remove("show");
+        overlay.classList.remove("show");
+    });
+
+</script>
 </body>
 </html>
