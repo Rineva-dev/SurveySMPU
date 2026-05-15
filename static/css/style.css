@@ -45,7 +45,8 @@ input, textarea {
     top:0;
     left:0;
     width:250px;
-    height:100vh;
+    height:100dvh;
+    min-height: 100dvh;
     display:flex;
     flex-direction:column;
     background:
@@ -59,6 +60,7 @@ input, textarea {
     box-shadow:
         10px 0 40px rgba(2,12,27,.18);
     z-index:100;
+    overflow-y: auto;
 }
 
 .sidebar::before{
@@ -165,9 +167,10 @@ input, textarea {
 }
 
 /* footer */
-.sidebar-footer{
+.sidebar-footer {
     padding:16px 14px 22px;
     border-top:1px solid rgba(255,255,255,.08);
+    margin-top:auto;
 }
 
 .logout-btn-modern{
@@ -574,6 +577,7 @@ input, textarea {
         transform:translateX(-100%);
         transition:.3s ease;
         width:250px;
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     /* sidebar show */
