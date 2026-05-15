@@ -257,6 +257,14 @@
 
 </div>
 
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p>Menyimpan jawaban<span class="dots"></span></p>
+    </div>
+</div>
+
 <script>
 let currentSession =
     {{ error_session_index if errors else 0 }};
@@ -380,32 +388,28 @@ function nextSession(){
 
 document.querySelector("form").addEventListener(
     "submit",
-    function(){
+    function (e) {
 
-        document
-            .querySelectorAll('.input-group')
-            .forEach(group => {
+        // validasi semua isian wajib
+        const errors = validateAllIsianWajib();
 
-                if (group.dataset.required === "true") {
+        if (errors.length > 0) {
+            e.preventDefault(); // ❌ stop submit
+            return;
+        }
 
-                    group
-                        .querySelectorAll('.isian-input')
-                        .forEach(input => {
+        // ✅ tampilkan loading
+        document.getElementById("loading").style.display = "flex";
 
-                            if (!input.value.trim()) {
-                                input.classList.add('input-error');
-                            } else {
-                                input.classList.remove('input-error');
-                            }
-
-                        });
-
-                }
-
-            });
-
+        // kunci tombol submit
+        const btn = this.querySelector(".submit-btn");
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+        }
     }
 );
+
 
 function prevSession(){
 

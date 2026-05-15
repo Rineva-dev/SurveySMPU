@@ -62,5 +62,26 @@
     </div>
 
 </div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p>Menyiapkan survey<span class="dots"></span></p>
+    </div>
+</div>
+
+<script>
+document.querySelector("form").addEventListener("submit", function () {
+    document.getElementById("loading").style.display = "flex";
+
+    // kunci tombol biar tidak double klik
+    const btn = this.querySelector("button");
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = "0.7";
+    }
+});
+</script>
 </body>
 </html>
