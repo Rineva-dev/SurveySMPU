@@ -9,7 +9,6 @@ body{
         Inter,
         Arial,
         sans-serif;
-
     background:
         radial-gradient(
             circle at top left,
@@ -22,7 +21,6 @@ body{
             transparent 25%
         ),
         #f5f7fb;
-
     color:#0f172a;
 }
 
@@ -40,19 +38,16 @@ input, textarea {
 }
 
 /* ======================================
-   SIDEBAR
+    SIDEBAR
 ====================================== */
 .sidebar {
     position:fixed;
     top:0;
     left:0;
-
     width:250px;
     height:100vh;
-
     display:flex;
     flex-direction:column;
-
     background:
         linear-gradient(
             180deg,
@@ -60,12 +55,9 @@ input, textarea {
             #03311d 40%,
             #014d2c 100%
         );
-
     border-right:1px solid rgba(255,255,255,.06);
-
     box-shadow:
         10px 0 40px rgba(2,12,27,.18);
-
     z-index:100;
 }
 
@@ -87,7 +79,7 @@ input, textarea {
 }
 
 /* ======================================
-   SIDEBAR HEADER
+    SIDEBAR HEADER
 ====================================== */
 .sidebar-header{
     position:relative;
@@ -101,10 +93,8 @@ input, textarea {
 
 .sidebar-header img{
     width:92px;
-
     filter:
         drop-shadow(0 8px 20px rgba(0,0,0,.25));
-
     transition:.3s ease;
 }
 
@@ -122,24 +112,16 @@ input, textarea {
 
 .menu-item{
     position:relative;
-
     display:flex;
     align-items:center;
     gap:14px;
-
     padding:14px 16px;
-
     margin-bottom:10px;
-
     border-radius:16px;
-
     color:rgba(255,255,255,.82);
-
     text-decoration:none;
-
     font-size:14px;
     font-weight:500;
-
     transition:all .25s ease;
 }
 
@@ -147,9 +129,7 @@ input, textarea {
 .menu-item:hover{
     background:
         rgba(255,255,255,.08);
-
     color:#ffffff;
-
     transform:translateX(3px);
 }
 
@@ -161,9 +141,7 @@ input, textarea {
             rgba(255,255,255,.16),
             rgba(255,255,255,.06)
         );
-
     color:#ffffff;
-
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,.08),
         0 10px 25px rgba(0,0,0,.18);
@@ -172,17 +150,12 @@ input, textarea {
 /* active glow */
 .menu-item.active::before{
     content:"";
-
     position:absolute;
-
     left:0;
     top:10px;
     bottom:10px;
-
     width:4px;
-
     border-radius:999px;
-
     background:
         linear-gradient(
             180deg,
@@ -199,25 +172,17 @@ input, textarea {
 
 .logout-btn-modern{
     position:relative;
-
     display:flex;
     align-items:center;
     justify-content:center;
     gap:12px;
-
     width:100%;
-
     padding: 10px 1px;
-
     border-radius:18px;
-
     text-decoration:none;
-
     font-size:14px;
     font-weight:600;
-
     color:#ffe2e2;
-
     background:
         linear-gradient(
             135deg,
@@ -227,9 +192,7 @@ input, textarea {
     border:
         1px solid rgba(255,255,255,.08);
     backdrop-filter:blur(10px);
-
     overflow:hidden;
-
     transition:
         transform .25s ease,
         box-shadow .25s ease,
@@ -239,36 +202,28 @@ input, textarea {
 /* glow effect */
 .logout-btn-modern::before{
     content:"";
-
     position:absolute;
-
     inset:0;
-
     background:
         linear-gradient(
             90deg,
             rgba(255,255,255,.06),
             transparent
         );
-
     opacity:.6;
-
     pointer-events:none;
 }
 
 /* hover */
 .logout-btn-modern:hover{
     transform:translateY(-2px);
-
     color:#ffffff;
-
     background:
         linear-gradient(
             135deg,
             rgba(255,179,0,.28),
             rgba(255,162,0,.25)
         );
-
     box-shadow:
         0 10px 24px rgba(239,68,68,.18);
 }
@@ -280,7 +235,7 @@ input, textarea {
 }
 
 /* ======================================
-   CONTENT
+    CONTENT
 ====================================== */
 .content{
     margin-left:250px;
@@ -288,22 +243,19 @@ input, textarea {
         90px
         30px
         30px;
-
     position:relative;
     z-index:1;
 }
 
 
 /* ======================================
-   ICON
+    ICON
 ====================================== */
 
 .menu-icon{
     width:20px;
     height:20px;
-
     object-fit:contain;
-
     opacity:.9;
 }
 
@@ -314,64 +266,48 @@ input, textarea {
 }
 
 /* ======================================
-   HEADER
+    HEADER
 ====================================== */
 
 .admin-header{
     position:fixed;
-
     top:10px;
     left:270px;
     right:24px;
-
     height:72px;
-
     display:flex;
     align-items:center;
     justify-content:space-between;
-
     padding:0 22px;
-
-    border-radius:24px;
-
+    border-radius:10px;
     background:
         rgba(255,255,255,.72);
-
     backdrop-filter:blur(18px);
-
     border:
         1px solid rgba(255,255,255,.8);
-
     box-shadow:
         0 10px 40px rgba(15,23,42,.08);
-
     z-index:50;
-
     overflow:hidden;
 }
 
 /* ambient glow */
 .admin-header::before{
     content:"";
-
     position:absolute;
-
     inset:0;
-
     background:
         linear-gradient(
             90deg,
             rgba(253,177,0,.08),
             rgba(16,185,129,.05)
         );
-
     pointer-events:none;
 }
 
 /* ======================================
-   LEFT
+    LEFT
 ====================================== */
-
 .header-left{
     display:flex;
     align-items:center;
@@ -386,9 +322,7 @@ input, textarea {
 .admin-main-title{
     font-size:22px;
     font-weight:800;
-
     color:#0f172a;
-
     letter-spacing:-.7px;
 }
 
@@ -396,31 +330,24 @@ input, textarea {
     display:flex;
     align-items:center;
     gap:8px;
-
     margin-top:5px;
-
     font-size:12px;
     font-weight:500;
-
     color:#64748b;
 }
 
 .admin-sub-title .dot{
     width:7px;
     height:7px;
-
     border-radius:50%;
-
     background:#10b981;
-
     box-shadow:
         0 0 12px rgba(16,185,129,.7);
 }
 
 /* ======================================
-   RIGHT
+    RIGHT
 ====================================== */
-
 .header-right{
     display:flex;
     align-items:center;
@@ -430,44 +357,32 @@ input, textarea {
 /* ======================================
    SEARCH
 ====================================== */
-
 .header-search{
     position:relative;
-
     display:flex;
     align-items:center;
-
     width:260px;
     height:46px;
-
     padding:0 16px 0 20px;
-
     border-radius:16px;
-
     background:
         rgba(255,255,255,.72);
-
     border:
         1px solid rgba(226,232,240,.9);
-
     transition:.25s ease;
 }
 
 .header-search:focus-within{
     border-color:#ffb701;
-
     box-shadow:
         0 0 0 4px rgba(16,185,129,.08);
 }
 
 .header-search i{
     position:absolute;
-
     left:15px;
-
     width:18px;
     height:18px;
-
     color:#94a3b8;
 }
 
@@ -481,43 +396,30 @@ input, textarea {
 }
 
 /* ======================================
-   ACTION BUTTON
+    ACTION BUTTON
 ====================================== */
-
 .header-action-btn{
     width:46px;
     height:46px;
-
     border:none;
-
     border-radius:16px;
-
-    background:
-        rgba(255,255,255,.75);
-
-    border:
-        1px solid rgba(226,232,240,.9);
-
+    background: rgba(255,255,255,.75);
+    border: 1px solid rgba(226,232,240,.9);
     display:flex;
     align-items:center;
     justify-content:center;
-
     cursor:pointer;
-
     transition:.25s ease;
 }
 
 .header-action-btn:hover{
     transform:translateY(-2px);
-
-    box-shadow:
-        0 10px 24px rgba(15,23,42,.08);
+    box-shadow: 0 10px 24px rgba(15,23,42,.08);
 }
 
 .header-action-btn i{
     width:20px;
     height:20px;
-
     color:#475569;
 }
 
@@ -526,23 +428,19 @@ input, textarea {
 }
 
 @keyframes headerFloat{
-
     from{
         opacity:0;
         transform:translateY(-10px);
     }
-
     to{
         opacity:1;
         transform:none;
     }
-
 }
 
 /* ======================================
-   TITLE
+    TITLE
 ====================================== */
-
 .admin-title{
     display:flex;
     flex-direction:column;
@@ -551,9 +449,7 @@ input, textarea {
 .admin-main-title{
     font-size:20px;
     font-weight:800;
-
     color:#0f172a;
-
     letter-spacing:-.5px;
 }
 
@@ -561,31 +457,24 @@ input, textarea {
     display:flex;
     align-items:center;
     gap:7px;
-
     margin-top:4px;
-
     font-size:12px;
     font-weight:500;
-
     color:#64748b;
 }
 
 .admin-sub-title .dot{
     width:7px;
     height:7px;
-
     border-radius:50%;
-
     background:#10b981;
-
     box-shadow:
         0 0 10px rgba(16,185,129,.6);
 }
 
 /* ======================================
-   PROFILE
+    PROFILE
 ====================================== */
-
 .admin-profile{
     display:flex;
     align-items:center;
@@ -595,19 +484,14 @@ input, textarea {
 .admin-profile img{
     width:44px;
     height:44px;
-
     border-radius:14px;
-
     object-fit:cover;
-
     border:2px solid rgba(255,255,255,.8);
-
     box-shadow:
         0 8px 20px rgba(15, 23, 42, 0.058),
         0 0 0 4px rgba(255, 201, 75, 0.07);
 
     cursor:pointer;
-    
     transition:.25s ease;
 }
 
@@ -616,7 +500,7 @@ input, textarea {
 }
 
 /* ======================================
-   FILTER CARD
+    FILTER CARD
 ====================================== */
 
 .filter-container{
@@ -627,41 +511,28 @@ input, textarea {
     padding:20px 22px;
     margin-bottom:24px;
     border-radius:20px;
-    background:
-        rgba(255,255,255,.82);
+    background: rgba(255,255,255,.82);
     backdrop-filter:blur(14px);
-    border:
-        1px solid rgba(255,255,255,.8);
-    box-shadow:
-        0 12px 40px rgba(15,23,42,.06);
+    border: 1px solid rgba(255,255,255,.8);
+    box-shadow: 0 12px 40px rgba(15,23,42,.06);
     border-left: 4px solid rgba(0, 46, 16, 0.805);
 }
 
 /* ======================================
-   MOBILE MENU BUTTON
+    MOBILE MENU BUTTON
 ====================================== */
 
 .mobile-menu-btn{
     display:none;
-
     width:44px;
     height:44px;
-
     border:none;
-
     border-radius:14px;
-
-    background:
-        rgba(255,255,255,.72);
-
-    border:
-        1px solid rgba(226,232,240,.9);
-
+    background: rgba(255,255,255,.72);
+    border: 1px solid rgba(226,232,240,.9);
     align-items:center;
     justify-content:center;
-
     cursor:pointer;
-
     transition:.25s ease;
 }
 
@@ -676,22 +547,16 @@ input, textarea {
 }
 
 /* ======================================
-   SIDEBAR OVERLAY
+    SIDEBAR OVERLAY
 ====================================== */
-
 .sidebar-overlay{
     position:fixed;
     inset:0;
-
     background:rgba(15,23,42,.45);
-
     backdrop-filter:blur(3px);
-
     opacity:0;
     visibility:hidden;
-
     transition:.25s ease;
-
     z-index:90;
 }
 
@@ -701,16 +566,13 @@ input, textarea {
 }
 
 /* ======================================
-   MOBILE
+    MOBILE
 ====================================== */
-
 @media(max-width:768px){
-
     /* sidebar hidden */
     .sidebar{
         transform:translateX(-100%);
         transition:.3s ease;
-
         width:250px;
     }
 
@@ -751,6 +613,20 @@ input, textarea {
     /* optional */
     .header-search{
         display:none;
+    }
+
+    .header-right{
+        gap:8px;
+    }
+
+    .header-action-btn{
+        width:40px;
+        height:40px;
+    }
+
+    .admin-profile img{
+        width:40px;
+        height:40px;
     }
 
 }

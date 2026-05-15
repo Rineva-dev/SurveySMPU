@@ -281,12 +281,15 @@
 
                 <div class="session-header">
 
-                    <input
-                        type="text"
-                        name="session_title[]"
-                        class="session-title"
-                        placeholder="Nama Session"
-                    >
+                    <div class="session-info">
+
+                        <input
+                            type="text"
+                            name="session_title[]"
+                            class="session-title"
+                            placeholder="Nama Session"
+                        >
+                    </div>
 
                     <button
                         type="button"
@@ -297,6 +300,12 @@
                     </button>
 
                 </div>
+                <textarea
+                    name="session_description[]"
+                    class="session-description"
+                    rows="2"
+                    placeholder="Deskripsi singkat session (opsional)"
+                ></textarea>
 
                 <div class="session-question-container"></div>
 
@@ -679,6 +688,16 @@ window.addEventListener('DOMContentLoaded', () => {
         currentSession.querySelector(
             '.session-title'
         ).value = sessionData.title;
+
+        const sessionDescription =
+            currentSession.querySelector(
+                '.session-description'
+            );
+
+        if(sessionDescription){
+            sessionDescription.value =
+                sessionData.description || '';
+        }
 
         const addBtn =
             currentSession.querySelector(

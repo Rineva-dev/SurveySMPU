@@ -181,6 +181,10 @@ def admin_survey_tambah():
             "session_title[]"
         )
 
+        session_descriptions = request.form.getlist(
+            "session_description[]"
+        )
+
         question_sessions = request.form.getlist(
             "question_session[]"
         )
@@ -188,10 +192,16 @@ def admin_survey_tambah():
         # container session
         sessions = []
 
-        for s in session_titles:
+        for i, s in enumerate(session_titles):
 
             sessions.append({
                 "title": s,
+
+                "description":
+                    session_descriptions[i]
+                    if i < len(session_descriptions)
+                    else "",
+
                 "questions": []
             })
 
@@ -320,16 +330,26 @@ def edit_survey(survey_id):
             "session_title[]"
         )
 
+        session_descriptions = request.form.getlist(
+            "session_description[]"
+        )
+
         question_sessions = request.form.getlist(
             "question_session[]"
         )
 
         sessions = []
 
-        for s in session_titles:
+        for i, s in enumerate(session_titles):
 
             sessions.append({
                 "title": s,
+
+                "description":
+                    session_descriptions[i]
+                    if i < len(session_descriptions)
+                    else "",
+
                 "questions": []
             })
 

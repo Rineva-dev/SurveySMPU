@@ -139,6 +139,12 @@
                 <div class="session-step">
                     Session {{ loop.index }} / {{ sessions|length }}
                 </div>
+
+                {% if session.description %}
+                <p class="session-description">
+                    {{ session.description }}
+                </p>
+                {% endif %}
             </div>
 
             {% for q in session.questions %}

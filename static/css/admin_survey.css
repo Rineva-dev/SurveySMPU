@@ -33,7 +33,7 @@
    FORM GROUP
 =============================== */
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
 }
 
 .form-group label {
@@ -47,7 +47,8 @@
 .form-group input,
 .form-group textarea,
 .form-group select {
-    width: 97%;
+    width: 100%;
+    box-sizing: border-box;
     padding: 11px 14px;
     font-size: 14px;
     border-radius: 5px;
@@ -98,7 +99,8 @@
 }
 
 .answer-box input {
-    width: 95%;
+    width: 100%;
+    box-sizing: border-box;
     padding: 10px 12px;
     font-size: 14px;
     border-radius: 8px;
@@ -254,6 +256,11 @@
 .table-survey td.status {
     text-align: center;
     vertical-align: middle;
+}
+
+.table-wrapper{
+    width:100%;
+    overflow-x:auto;
 }
 
 /* FORM DI DALAM TD */
@@ -646,6 +653,7 @@
 .unsur-input-row{
     display:flex;
     gap:12px;
+    align-items: center;
 }
 
 .unsur-input-row input{
@@ -680,18 +688,13 @@
     display:flex;
     align-items:center;
     gap:10px;
-
     background:#eef2ff;
-
+    margin-bottom: 10px;
     color:#3730a3;
-
     border:1px solid #c7d2fe;
-
-    padding:10px 14px;
-
+    padding:8px 12px;
     border-radius:999px;
-
-    font-size:14px;
+    font-size:12px;
     font-weight:600;
 }
 
@@ -785,48 +788,80 @@
 /* =========================================
    HEADER SESSION
 ========================================= */
-
 .session-header{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:16px;
-
-    margin-bottom:24px;
+    gap:12px;
+    margin-bottom:10px;
 }
 
 .session-title{
-    flex:1;
-    border:none !important;
+    width:100%;
     background:#f8fafc !important;
     padding:10px 18px !important;
-    border-radius:5px !important;
-    font-size:16px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius:10px !important;
+    font-size:14px !important;
     font-weight:600;
     color:#0f172a;
 }
 
 .session-title:focus{
     background:white !important;
-    border:1px solid #003c22 !important;
+    border:1px solid #ffbf00 !important;
+    box-shadow: 0 0 0 4px rgba(0,60,34,.08);
+}
+
+/* =========================================
+   SESSION INFO
+========================================= */
+
+.session-info{
+    flex:1;
+    min-width:0;
+    display:flex;
+    gap:12px;
+}
+
+/* =========================================
+    SESSION DESCRIPTION
+========================================= */
+.session-description{
+    width:100%;
+    border:none;
+    background:#f8fafc;
+    padding:14px 18px;
+    border-radius:5px;
+    font-size:14px;
+    color:#475569;
+    resize:vertical;
+    min-height:70px;
+    transition:.2s ease;
+    box-sizing:border-box;
+}
+
+.session-description:focus{
+    outline:none;
+    background:white;
+    border:1px solid #003c22;
     box-shadow:
         0 0 0 4px rgba(0,60,34,.08);
 }
 
 /* =========================================
-   REMOVE SESSION BUTTON
+    REMOVE SESSION BUTTON
 ========================================= */
-
 .btn-remove-session{
-    width:44px;
-    height:44px;
+    width:40px;
+    height:40px;
+    min-width:44px;
+    flex-shrink:0;
 
     border:none;
-
     border-radius:14px;
 
     background:#fff1f2;
-
     color:#e11d48;
 
     cursor:pointer;
@@ -840,7 +875,6 @@
 .btn-remove-session:hover{
     background:#e11d48;
     color:white;
-
     transform:scale(1.05);
 }
 
@@ -1020,9 +1054,7 @@
 
 .session-footer{
     margin-top:24px;
-
     padding-top:20px;
-
     border-top:1px dashed #dbe3ee;
 }
 
