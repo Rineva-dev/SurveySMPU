@@ -849,6 +849,23 @@
         0 0 0 4px rgba(0,60,34,.08);
 }
 
+.session-description-wrapper {
+    margin-top: 10px;
+}
+
+.session-description-editor {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    min-height: 120px;
+    margin-bottom: 20px;
+}
+
+.session-description-editor:focus-within {
+    border-color: #003c22;
+    box-shadow: 0 0 0 4px rgba(0,60,34,.08);
+}
+
 /* =========================================
     REMOVE SESSION BUTTON
 ========================================= */
@@ -899,6 +916,7 @@
     border-radius:20px;
     padding:22px;
     transition:.2s ease;
+    margin-top: 10px;
 }
 
 .question-card:hover{

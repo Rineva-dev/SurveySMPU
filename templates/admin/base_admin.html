@@ -16,6 +16,7 @@
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
 </head>
 <body>
 
@@ -118,6 +119,40 @@
         overlay.classList.remove("show");
     });
 
+</script>
+
+<!-- GLOBAL LOADING OVERLAY -->
+<div class="global-loading" id="globalLoading">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p>Memproses<span class="dots"></span></p>
+    </div>
+</div>
+
+<script>
+const loading = document.getElementById("globalLoading");
+
+// TAMPILKAN SAAT SUBMIT FORM
+document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", () => {
+        loading.style.display = "flex";
+    });
+});
+
+// TAMPILKAN SAAT KLIK LINK (KECUALI LOGOUT & ANCHOR)
+document.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", (e) => {
+        const href = link.getAttribute("href");
+
+        if (
+            href &&
+            !href.startsWith("#") &&
+            !link.classList.contains("no-loading")
+        ) {
+            loading.style.display = "flex";
+        }
+    });
+});
 </script>
 </body>
 </html>

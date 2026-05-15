@@ -525,7 +525,8 @@ def survey_responden(survey_id):
                         if k.startswith(key_prefix)
                     ]
 
-                    if not found or all(v.strip() == "" for v in found):
+                    # 🔥 jika ADA SATU SAJA kolom kosong → error
+                    if not found or any(v.strip() == "" for v in found):
                         errors.append({
                             "number": counter,
                             "text": q["text"]

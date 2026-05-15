@@ -141,9 +141,9 @@
                 </div>
 
                 {% if session.description %}
-                <p class="session-description">
-                    {{ session.description }}
-                </p>
+                <div class="session-description quill-content">
+                    {{ session.description | replace('\n', '<br>') | safe }}
+                </div>
                 {% endif %}
             </div>
 
@@ -164,11 +164,15 @@
 
                         {% if q.type == "isian" %}
 
-                            <div class="input-group">
+                            <div class="input-group"
+                                data-required="{{ 'true' if q.is_required else 'false' }}"
+                                data-count="{{ q.count }}"
+                            >
                                 {% for i in range(q.count | default(1)) %}
                                     <input
                                         type="text"
                                         name="q{{ q_index }}_{{ i }}"
+                                        class="isian-input"
                                         placeholder="Jawaban {{ i + 1 }}"
                                         value="{{ old.get('q' ~ q_index ~ '_' ~ i, '') if old }}"
                                     >
@@ -360,27 +364,48 @@ function nextSession(){
             );
 
         if(!unsurSelect.value){
-
             alert(
                 'Silakan pilih unsur responden terlebih dahulu'
             );
-
             unsurSelect.focus();
-
             return;
         }
-
     }
 
     if(currentSession < sessions.length - 1){
-
         currentSession++;
-
         showSession(currentSession);
+    }
+}
+
+document.querySelector("form").addEventListener(
+    "submit",
+    function(){
+
+        document
+            .querySelectorAll('.input-group')
+            .forEach(group => {
+
+                if (group.dataset.required === "true") {
+
+                    group
+                        .querySelectorAll('.isian-input')
+                        .forEach(input => {
+
+                            if (!input.value.trim()) {
+                                input.classList.add('input-error');
+                            } else {
+                                input.classList.remove('input-error');
+                            }
+
+                        });
+
+                }
+
+            });
 
     }
-
-}
+);
 
 function prevSession(){
 
@@ -473,6 +498,56 @@ document.addEventListener(
 
     }
 );
+
+function validateAllIsianWajib() {
+
+    let errors = [];
+
+    const groups =
+        document.querySelectorAll('.input-group');
+
+    groups.forEach(group => {
+
+        if (group.dataset.required === "true") {
+
+            const inputs =
+                group.querySelectorAll('.isian-input');
+
+            let kosong = false;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    kosong = true;
+                    input.classList.add('input-error');
+                } else {
+                    input.classList.remove('input-error');
+                }
+            });
+
+            if (kosong) {
+                const questionCard =
+                    group.closest('.question-card');
+
+                const number =
+                    questionCard.querySelector(
+                        '.question-number'
+                    ).innerText;
+
+                const text =
+                    questionCard.querySelector(
+                        '.question-text'
+                    ).innerText;
+
+                errors.push({
+                    number,
+                    text
+                });
+            }
+        }
+    });
+
+    return errors;
+}
 
 // =========================
 // INIT

@@ -176,6 +176,29 @@ input[type="text"]:focus{
     color: #6b7280;
 }
 
+/* hasil dari Quill */
+.quill-content p {
+    margin: 0 0 8px 0;
+}
+
+.quill-content strong {
+    font-weight: 600;
+}
+
+.quill-content em {
+    font-style: italic;
+}
+
+.quill-content ul,
+.quill-content ol {
+    padding-left: 18px;
+    margin: 6px 0;
+}
+
+.quill-content li {
+    margin-bottom: 4px;
+}
+
 /* =========================================
    RADIO OPTION
 ========================================= */
@@ -722,6 +745,11 @@ input[type="text"]:focus{
 
 .error-text{
     line-height:1.5;
+}
+
+.input-error {
+    border: 1px solid #ef4444;
+    background: #fff5f5;
 }
 
 /* =========================================

@@ -300,12 +300,14 @@
                     </button>
 
                 </div>
-                <textarea
-                    name="session_description[]"
-                    class="session-description"
-                    rows="2"
-                    placeholder="Deskripsi singkat session (opsional)"
-                ></textarea>
+                <div class="session-description-wrapper">
+                    <div class="session-description-editor"></div>
+                    <input
+                        type="hidden"
+                        name="session_description[]"
+                        class="session-description-input"
+                    >
+                </div>
 
                 <div class="session-question-container"></div>
 
@@ -435,6 +437,44 @@ function addSession() {
         template.content.cloneNode(true);
 
     container.appendChild(clone);
+        const sessionCard =
+        container.lastElementChild;
+
+    initSessionEditors(sessionCard);
+}
+
+function initSessionEditors(sessionCard) {
+
+    const editorEl =
+        sessionCard.querySelector(
+            '.session-description-editor'
+        );
+
+    const inputEl =
+        sessionCard.querySelector(
+            '.session-description-input'
+        );
+
+    if (!editorEl) return;
+
+    const quill = new Quill(editorEl, {
+        theme: 'snow',
+        placeholder: 'Deskripsi singkat session...',
+        modules: {
+            toolbar: [
+                ['bold', 'italic'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['clean']
+            ]
+        }
+    });
+
+    quill.on('text-change', function () {
+        inputEl.value = quill.root.innerHTML;
+    });
+
+    // simpan instance ke DOM (untuk edit)
+    sessionCard._quill = quill;
 }
 
 function removeSession(btn) {
@@ -689,13 +729,8 @@ window.addEventListener('DOMContentLoaded', () => {
             '.session-title'
         ).value = sessionData.title;
 
-        const sessionDescription =
-            currentSession.querySelector(
-                '.session-description'
-            );
-
-        if(sessionDescription){
-            sessionDescription.value =
+        if (currentSession._quill) {
+            currentSession._quill.root.innerHTML =
                 sessionData.description || '';
         }
 
