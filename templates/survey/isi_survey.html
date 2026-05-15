@@ -242,7 +242,6 @@
                     <button
                         type="submit"
                         class="submit-btn"
-                        id="submitBtn"
                     >
                         Simpan Jawaban
                     </button>
@@ -389,26 +388,62 @@ function nextSession(){
 
 document.querySelector("form").addEventListener(
     "submit",
-    function (e) {
+    function(){
 
-        // 1. VALIDASI & TANDAI INPUT WAJIB
-        const errors = validateAllIsianWajib();
+        document
+            .querySelectorAll('.input-group')
+            .forEach(group => {
 
-        // 2. JIKA ADA ERROR → HENTIKAN SUBMIT
-        if (errors.length > 0) {
-            e.preventDefault();
-            return;
-        }
+                if (group.dataset.required === "true") {
 
-        // 3. JIKA AMAN → TAMPILKAN LOADING
-        const loading =
-            document.getElementById("loading-overlay");
+                    group
+                        .querySelectorAll('.isian-input')
+                        .forEach(input => {
 
-        if (loading) {
-            loading.classList.remove("hidden");
-        }
+                            if (!input.value.trim()) {
+                                input.classList.add('input-error');
+                            } else {
+                                input.classList.remove('input-error');
+                            }
+
+                        });
+
+                }
+
+            });
+
     }
 );
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const form =
+        document.querySelector("form");
+
+    const loading =
+        document.getElementById("loading-overlay");
+
+    if (!form || !loading) return;
+
+    form.addEventListener(
+        "submit",
+        () => {
+
+            // ⏳ TAMPILKAN LOADING
+            loading.classList.remove("hidden");
+
+            // 🔒 DISABLE TOMBOL SIMPAN (ANTI DOUBLE SUBMIT)
+            const submitBtn =
+                form.querySelector(".submit-btn");
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+
+        }
+    );
+
+});
 
 function prevSession(){
 
