@@ -59,6 +59,56 @@
             </div>
 
             <!-- ===============================
+                KONFIRMASI EMAIL RESPONDEN
+            ================================ -->
+            <div class="form-group">
+
+                <label>Email Responden</label>
+
+                <!-- AKTIF / NONAKTIF -->
+                <div class="radio-group email-choice">
+
+                    <label class="radio-pill">
+                        <input
+                            type="radio"
+                            name="email_enabled"
+                            value="0"
+                            {% if not survey or not survey.email_enabled %}
+                                checked
+                            {% endif %}
+                        >
+
+                        <span class="pill-content">
+                            <span class="pill-title">Tidak Wajib</span>
+                            <span class="pill-desc">
+                                Responden boleh kosongkan email
+                            </span>
+                        </span>
+                    </label>
+
+                    <label class="radio-pill">
+                        <input
+                            type="radio"
+                            name="email_enabled"
+                            value="1"
+                            {% if survey and survey.email_enabled %}
+                                checked
+                            {% endif %}
+                        >
+
+                        <span class="pill-content">
+                            <span class="pill-title">Wajib</span>
+                            <span class="pill-desc">
+                                Email harus diisi responden
+                            </span>
+                        </span>
+                    </label>
+
+                </div>
+
+            </div>
+
+            <!-- ===============================
                 UNSUR RESPONDEN
             ================================ -->
             <div class="form-group">
@@ -238,24 +288,52 @@
 
                     </div>
 
-                    <div class="radio-group">
+                    <input
+                        type="hidden"
+                        class="question-mode"
+                        value="single"
+                    >
 
-                        <label>
+                    <div class="radio-group email-choice">
+
+                        <label class="radio-pill">
+
                             <input
                                 type="radio"
-                                name="mode[]"
                                 value="single"
+                                onchange="changeMode(this)"
                             >
-                            Satu pilihan
+
+                            <span class="pill-content">
+                                <span class="pill-title">
+                                    Satu pilihan
+                                </span>
+
+                                <span class="pill-desc">
+                                    Responden hanya memilih satu jawaban
+                                </span>
+                            </span>
+
                         </label>
 
-                        <label>
+                        <label class="radio-pill">
+
                             <input
                                 type="radio"
-                                name="mode[]"
                                 value="multiple"
+                                onchange="changeMode(this)"
                             >
-                            Lebih dari satu
+
+                            <span class="pill-content">
+                                <span class="pill-title">
+                                    Lebih dari satu
+                                </span>
+
+                                <span class="pill-desc">
+                                    Responden memilih beberapa jawaban
+                                </span>
+                            </span>
+
                         </label>
 
                     </div>
@@ -368,11 +446,27 @@ function addQuestion(button) {
     const card =
         clone.querySelector('.question-card');
 
-    const qIndex = globalQuestionIndex++;
+    // =========================
+    // INDEX GLOBAL
+    // =========================
+
+    const qIndex = globalQuestionIndex;
+
+    globalQuestionIndex++;
 
     card.dataset.index = qIndex;
 
-    // textarea
+    const modeHidden =
+        card.querySelector('.question-mode');
+
+    modeHidden.name = `mode[${qIndex}]`;
+
+    modeHidden.value = 'single';
+
+    // =========================
+    // TEXTAREA
+    // =========================
+
     const textarea =
         card.querySelector(
             'textarea[name="pertanyaan[]"]'
@@ -380,13 +474,19 @@ function addQuestion(button) {
 
     textarea.name = 'pertanyaan[]';
 
-    // type
+    // =========================
+    // TYPE
+    // =========================
+
     const typeInput =
         card.querySelector('.question-type');
 
     typeInput.name = 'type[]';
 
-    // count
+    // =========================
+    // COUNT
+    // =========================
+
     const countInput =
         card.querySelector('.question-count');
 
@@ -394,17 +494,54 @@ function addQuestion(button) {
         countInput.name = 'count[]';
     }
 
-    // mode
-    const radios =
+    // =========================
+    // RADIO MODE
+    // =========================
+
+    const modeRadios =
         card.querySelectorAll(
-            'input[type="radio"]'
+            '.radio-group input[type="radio"]'
         );
 
-    radios.forEach(r => {
-        r.name = `mode[${qIndex}]`;
+    modeRadios.forEach(r => {
+        r.name = `mode_${qIndex}`;
     });
 
-    // hidden session
+    const singleRadio =
+        [...modeRadios].find(r => r.value === 'single');
+
+    if(singleRadio){
+        singleRadio.checked = true;
+    }
+
+    // =========================
+    // DEFAULT OPTION
+    // =========================
+
+    const hiddenLabel =
+        card.querySelector(
+            'input[name="option_label[0][]"]'
+        );
+
+    const textOption =
+        card.querySelector(
+            'input[name="option_text[0][]"]'
+        );
+
+    if (hiddenLabel) {
+        hiddenLabel.name =
+            `option_label[${qIndex}][]`;
+    }
+
+    if (textOption) {
+        textOption.name =
+            `option_text[${qIndex}][]`;
+    }
+
+    // =========================
+    // SESSION INDEX
+    // =========================
+
     const hiddenSession =
         document.createElement('input');
 
@@ -417,6 +554,16 @@ function addQuestion(button) {
         .indexOf(sessionCard);
 
     card.appendChild(hiddenSession);
+    const hiddenQuestionIndex =
+        document.createElement('input');
+
+    hiddenQuestionIndex.type = 'hidden';
+
+    hiddenQuestionIndex.name = 'question_index[]';
+
+    hiddenQuestionIndex.value = qIndex;
+
+    card.appendChild(hiddenQuestionIndex);
 
     container.appendChild(clone);
 }
@@ -490,13 +637,19 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleAnswerType(select) {
+
     const card = select.closest('.question-card');
+
     const boxes = card.querySelectorAll('.answer-box');
 
     boxes.forEach(b => b.classList.add('hidden'));
 
-    const typeInput = card.querySelector('.question-type');
-    const countInput = card.querySelector('.question-count');
+    const typeInput =
+        card.querySelector('.question-type');
+
+    const countInput =
+        card.querySelector('.question-count');
+
     if (typeInput) {
         typeInput.value = select.value;
     }
@@ -508,8 +661,23 @@ function handleAnswerType(select) {
     if (select.value === 'pilihan') {
         boxes[1].classList.remove('hidden');
     }
+
     if (countInput) {
         countInput.name = "count[]";
+    }
+
+}
+
+function changeMode(radio) {
+
+    const card =
+        radio.closest('.question-card');
+
+    const hidden =
+        card.querySelector('.question-mode');
+
+    if (hidden) {
+        hidden.value = radio.value;
     }
 }
 
@@ -518,23 +686,41 @@ function getOptionLabel(index) {
 }
 
 function addAnswer(btn) {
+
     const list = btn.closest('.answer-list');
+
     const card = btn.closest('.question-card');
+
     const qIndex = card.dataset.index;
 
     const rows = list.querySelectorAll('.answer-row');
-    const label = String.fromCharCode(97 + rows.length); // a,b,c
+
+    const label = String.fromCharCode(97 + rows.length);
 
     const row = document.createElement('div');
+
     row.className = 'answer-row';
 
     row.innerHTML = `
         <span class="option-label">${label}.</span>
 
-        <input type="hidden" name="option_label[${qIndex}][]" value="${label}">
-        <input type="text" name="option_text[${qIndex}][]" placeholder="Pilihan ${label}">
+        <input
+            type="hidden"
+            name="option_label[${qIndex}][]"
+            value="${label}"
+        >
 
-        <button type="button" onclick="addAnswer(this)">+</button>
+        <input
+            type="text"
+            name="option_text[${qIndex}][]"
+            placeholder="Pilihan ${label}"
+        >
+
+        <button
+            type="button"
+            onclick="addAnswer(this)">
+            +
+        </button>
     `;
 
     list.appendChild(row);
@@ -678,7 +864,7 @@ window.addEventListener('DOMContentLoaded', () => {
         `{{ survey.end_date }}`;
 
     // quill
-    quill.root.innerHTML = `{{ survey.description|safe }}`;
+    quill.root.innerHTML = {{ survey.description|tojson }};
 
     // unsur
     const unsurList =
@@ -714,6 +900,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     });
 
+    console.log(existingSurvey);
     // sessions
     existingSurvey.sessions.forEach((sessionData, sIndex) => {
 
@@ -730,8 +917,13 @@ window.addEventListener('DOMContentLoaded', () => {
         ).value = sessionData.title;
 
         if (currentSession._quill) {
+
             currentSession._quill.root.innerHTML =
                 sessionData.description || '';
+
+            currentSession.querySelector(
+                '.session-description-input'
+            ).value = sessionData.description || '';
         }
 
         const addBtn =
@@ -739,7 +931,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 '.btn-secondary'
             );
 
-        sessionData.questions.forEach(q => {
+        sessionData.questions.forEach((q, qIndex) => {
 
             addQuestion(addBtn);
 
@@ -774,6 +966,50 @@ window.addEventListener('DOMContentLoaded', () => {
 
             handleAnswerType(select);
 
+            // set mode pilihan
+            if(q.type === 'pilihan'){
+
+                const modeRadios =
+                    currentQuestion.querySelectorAll(
+                        '.radio-group input[type="radio"]'
+                    );
+
+                modeRadios.forEach(r => {
+                    r.name = `mode_${currentQuestion.dataset.index}`;
+                });
+
+                // reset semua radio dulu
+                const allRadios =
+                    currentQuestion.querySelectorAll(
+                        '.radio-group input[type="radio"]'
+                    );
+
+                allRadios.forEach(r => {
+                    r.checked = false;
+                });
+
+                // pilih sesuai data backend
+                const selectedMode = q.mode || 'single';
+
+                const modeRadio =
+                    currentQuestion.querySelector(
+                        `.radio-group input[value="${selectedMode}"]`
+                    );
+
+                if(modeRadio){
+                    modeRadio.checked = true;
+                    changeMode(modeRadio);
+                }
+
+                // sync hidden input
+                const hiddenMode =
+                    currentQuestion.querySelector('.question-mode');
+
+                if(hiddenMode){
+                    hiddenMode.value = selectedMode;
+                }
+            }
+
             currentQuestion.querySelector(
                 '.question-type'
             ).value = q.type;
@@ -796,10 +1032,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 answerList.innerHTML = '';
 
-                q.options.forEach((opt, i) => {
+                q.options.forEach((opt, optIndex) => {
 
                     const label =
-                        opt.label || String.fromCharCode(97 + i);
+                        opt.label || String.fromCharCode(97 + optIndex);
 
                     const row =
                         document.createElement('div');
@@ -807,9 +1043,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     row.className = 'answer-row';
 
                     row.innerHTML = `
-                        <span class="option-label">
-                            ${label}.
-                        </span>
+                        <span class="option-label">${label}.</span>
 
                         <input
                             type="hidden"
@@ -820,13 +1054,13 @@ window.addEventListener('DOMContentLoaded', () => {
                         <input
                             type="text"
                             name="option_text[${currentQuestion.dataset.index}][]"
-                            value="${opt.text}"
+                            value="${opt.text || ''}"
+                            placeholder="Pilihan ${label}"
                         >
 
                         <button
                             type="button"
-                            onclick="addAnswer(this)"
-                        >
+                            onclick="addAnswer(this)">
                             +
                         </button>
                     `;

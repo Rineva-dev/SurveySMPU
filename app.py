@@ -7,6 +7,7 @@ import io, uuid
 from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 from dotenv import load_dotenv
+
 load_dotenv()
 
 def format_date(date_str):
@@ -28,6 +29,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
+
 class Survey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -35,6 +39,8 @@ class Survey(db.Model):
     start_date = db.Column(db.String(20))
     end_date = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True)
+    email_enabled = db.Column(db.Boolean, default=True)
+    email_required = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(30))
     questions = db.Column(db.Text) 
     unsur_responden = db.Column(db.Text)
@@ -88,6 +94,8 @@ class SurveyResponse(db.Model):
     unsur_responden = db.Column(
         db.String(100)
     )
+
+    email = db.Column(db.String(150))
 
     answers = db.Column(
         db.Text
@@ -172,6 +180,8 @@ def admin_survey_tambah():
         start_date = request.form.get("start_date")
         end_date = request.form.get("end_date")
         unsur_responden = request.form.getlist("unsur_responden[]")
+        email_enabled = request.form.get("email_enabled") == "1"
+        email_required = request.form.get("email_required") == "1"
 
         # =========================
         # SESSION TITLE
@@ -212,17 +222,27 @@ def admin_survey_tambah():
         texts = request.form.getlist("pertanyaan[]")
         types = request.form.getlist("type[]")
         counts = request.form.getlist("count[]")
-        modes = request.form.getlist("mode[]")
         required_flags = request.form.getlist("is_required[]")
+        
+        question_indexes = request.form.getlist(
+            "question_index[]"
+        )
 
         for i in range(len(texts)):
 
+            real_index = question_indexes[i]
+
+            mode = request.form.get(
+                f"mode[{real_index}]",
+                "single"
+            )
+
             labels = request.form.getlist(
-                f"option_label[{i}][]"
+                f"option_label[{real_index}][]"
             )
 
             texts_opt = request.form.getlist(
-                f"option_text[{i}][]"
+                f"option_text[{real_index}][]"
             )
 
             options = []
@@ -251,10 +271,7 @@ def admin_survey_tambah():
                     and counts[i].isdigit()
                     else 1,
 
-                "mode":
-                    modes[i]
-                    if i < len(modes)
-                    else "single",
+                "mode": mode,
 
                 "options": options,
                 "is_required": True if i < len(required_flags) else False
@@ -274,8 +291,13 @@ def admin_survey_tambah():
             description=description,
             start_date=start_date,
             end_date=end_date,
+
             questions=json.dumps(sessions),
             unsur_responden=json.dumps(unsur_responden),
+
+            email_enabled=email_enabled,
+            email_required=email_required,
+
             is_active=True,
             created_at=datetime.now().strftime("%Y-%m-%d %H:%M")
         )
@@ -321,6 +343,8 @@ def edit_survey(survey_id):
         unsur_responden = request.form.getlist("unsur_responden[]")
         survey.unsur_responden = json.dumps(unsur_responden)
         required_flags = request.form.getlist("is_required[]")
+        survey.email_enabled = request.form.get("email_enabled") == "1"
+        survey.email_required = request.form.get("email_required") == "1"
 
         # =========================
         # SESSION TITLE
@@ -362,17 +386,29 @@ def edit_survey(survey_id):
         types = request.form.getlist("type[]")
 
         counts = request.form.getlist("count[]")
+        question_indexes = request.form.getlist(
+            "question_index[]"
+        )
 
-        modes = request.form.getlist("mode[]")
+        question_indexes = request.form.getlist(
+            "question_index[]"
+        )
 
         for i in range(len(texts)):
 
+            real_index = question_indexes[i]
+
+            mode = request.form.get(
+                f"mode[{real_index}]",
+                "single"
+            )
+
             labels = request.form.getlist(
-                f"option_label[{i}][]"
+                f"option_label[{real_index}][]"
             )
 
             texts_opt = request.form.getlist(
-                f"option_text[{i}][]"
+                f"option_text[{real_index}][]"
             )
 
             options = []
@@ -401,10 +437,7 @@ def edit_survey(survey_id):
                     and counts[i].isdigit()
                     else 1,
 
-                "mode":
-                    modes[i]
-                    if i < len(modes)
-                    else "single",
+                "mode": mode,
 
                 "options": options,
                 "is_required": True if i < len(required_flags) else False
@@ -433,6 +466,49 @@ def edit_survey(survey_id):
         is_edit=True
     )
 
+
+@app.route("/admin/survey/<int:survey_id>/detail")
+def detail_survey(survey_id):
+
+    if not session.get("admin"):
+        return redirect(url_for("admin_login"))
+
+    survey = Survey.query.get_or_404(survey_id)
+
+    responses = SurveyResponse.query.filter_by(
+        survey_id=survey_id
+    ).order_by(
+        SurveyResponse.id.asc()
+    ).all()
+
+    for r in responses:
+        r.answers_json = json.loads(r.answers or "{}")
+
+    parsed_questions = json.loads(
+        survey.questions or "[]"
+    )
+
+    return render_template(
+        "admin/detail_survey.html",
+        survey=survey,
+        responses=responses,
+        parsed_questions=parsed_questions
+    )
+
+
+@app.post("/admin/respon/<int:response_id>/hapus")
+def hapus_respon(response_id):
+
+    if not session.get("admin"):
+        return redirect(url_for("admin_login"))
+
+    response = SurveyResponse.query.get_or_404(response_id)
+
+    db.session.delete(response)
+    db.session.commit()
+
+    return redirect(request.referrer or url_for("admin_survey"))
+
 @app.route("/admin/survey/<int:survey_id>/hapus", methods=["POST"])
 def hapus_survey(survey_id):
     if not session.get("admin"):
@@ -448,6 +524,8 @@ def hapus_survey(survey_id):
 
 @app.route("/survey/<int:survey_id>", methods=["GET", "POST"])
 def survey_responden(survey_id):
+
+    errors = []
 
     survey = Survey.query.get_or_404(survey_id)
 
@@ -485,6 +563,24 @@ def survey_responden(survey_id):
 
         token = request.form.get("token")
         session_token = session.get(f"survey_{survey_id}_token")
+        email = None
+
+        if survey.email_enabled:
+            email = request.form.get("email", "").strip()
+
+            if survey.email_required and not email:
+                errors.append({
+                    "number": "Email",
+                    "text": "Email wajib diisi"
+                })
+
+            elif email:
+                import re
+                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$", email):
+                    errors.append({
+                        "number": "Email",
+                        "text": "Format email tidak valid"
+                    })
 
         if not token or token != session_token:
             abort(404)
@@ -520,10 +616,11 @@ def survey_responden(survey_id):
                 if q.get("is_required"):
                     key_prefix = f"q{counter}"
 
-                    found = [
-                        v for k, v in request.form.items()
-                        if k.startswith(key_prefix)
-                    ]
+                    found = []
+
+                    for key in request.form.keys():
+                        if key.startswith(key_prefix):
+                            found.extend(request.form.getlist(key))
 
                     # 🔥 jika ADA SATU SAJA kolom kosong → error
                     if not found or any(v.strip() == "" for v in found):
@@ -554,6 +651,8 @@ def survey_responden(survey_id):
                 "survey/isi_survey.html",
                 survey=survey,
                 sessions=sessions,
+                show_email=survey.email_enabled,
+                email_required=survey.email_required,
                 errors=errors,
                 old=request.form,
                 selected_unsur=unsur_responden,
@@ -562,13 +661,21 @@ def survey_responden(survey_id):
             )
 
         # SIMPAN JAWABAN
-        for k, v in request.form.items():
-            if k.startswith("q"):
-                answers[k] = v
+        for key in request.form.keys():
+
+            if key.startswith("q"):
+
+                values = request.form.getlist(key)
+
+                if len(values) == 1:
+                    answers[key] = values[0]
+                else:
+                    answers[key] = values
 
         response = SurveyResponse(
             survey_id=survey_id,
             unsur_responden=unsur_responden,
+            email=email if survey.email_enabled else None,
             answers=json.dumps(answers),
             created_at=datetime.now().strftime("%Y-%m-%d %H:%M")
         )
@@ -700,7 +807,8 @@ def download_survey(survey_id):
     header_top = [
         "No",
         "Tanggal",
-        "Unsur Responden"
+        "Unsur Responden",
+        "Email"
     ]
 
     header_bottom = []
@@ -802,6 +910,7 @@ def download_survey(survey_id):
     ws["A1"] = "No"
     ws["B1"] = "Tanggal"
     ws["C1"] = "Unsur Responden"
+    ws["D1"] = "Email"
 
     # append header row 2
     for idx, value in enumerate(header_bottom):
@@ -845,7 +954,8 @@ def download_survey(survey_id):
         row = [
             idx,
             r.created_at,
-            r.unsur_responden
+            r.unsur_responden,
+            r.email or ""
         ]
 
         for key in question_keys:

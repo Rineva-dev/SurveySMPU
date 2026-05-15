@@ -78,7 +78,6 @@
                                 name="unsur_responden"
                                 id="unsur-select"
                                 value="{{ selected_unsur if selected_unsur }}"
-                                required
                             >
 
                             <!-- selected -->
@@ -112,6 +111,42 @@
                     </div>
                 </div>
             </div>
+
+            <!-- =========================
+                INPUT EMAIL RESPONDEN
+            ========================= -->
+            {% if survey.email_enabled %}
+            <div class="question-card">
+
+                <div class="question-number">
+                    E
+                </div>
+
+                <div class="question-content">
+
+                    <p class="question-text">
+                        Alamat Email Responden
+                    </p>
+
+                    <div class="input-group" data-required="true">
+
+                        <input
+                            type="email"
+                            name="email"
+                            id="email-input"
+                            class="isian-input"
+                            placeholder="contoh@email.com"
+                            value="{{ old.email if old }}"
+                        >
+
+                        <small class="input-hint error hidden" id="email-error"></small>
+
+                    </div>
+
+                </div>
+
+            </div>
+            {% endif %}
 
             <div class="session-navigation">
 
@@ -181,29 +216,59 @@
 
                         {% elif q.type == "pilihan" %}
 
-                            <div class="option-group">
+                        <div class="option-group">
+
+                            {% if q.mode == "multiple" %}
 
                                 {% for opt in q.options %}
-                                    <label class="option-item">
+                                <label class="option-item">
 
-                                        <input
-                                            type="radio"
-                                            name="q{{ q_index }}"
-                                            value="{{ opt.label }}"
-                                            {% if old and old.get('q' ~ q_index) == opt.label %}checked{% endif %}
-                                        >
+                                    <input
+                                        type="checkbox"
+                                        name="q{{ q_index }}"
+                                        value="{{ opt.label }}"
+                                        {% if old and opt.label in old.getlist('q' ~ q_index) %}
+                                            checked
+                                        {% endif %}
+                                    >
 
-                                        <span class="custom-radio"></span>
+                                    <span class="custom-checkbox"></span>
 
-                                        <span>
-                                            <strong>{{ opt.label }}.</strong>
-                                            {{ opt.text }}
-                                        </span>
+                                    <span>
+                                        <strong>{{ opt.label }}.</strong>
+                                        {{ opt.text }}
+                                    </span>
 
-                                    </label>
+                                </label>
                                 {% endfor %}
 
-                            </div>
+                            {% else %}
+
+                                {% for opt in q.options %}
+                                <label class="option-item">
+
+                                    <input
+                                        type="radio"
+                                        name="q{{ q_index }}"
+                                        value="{{ opt.label }}"
+                                        {% if old and old.get('q' ~ q_index) == opt.label %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <span class="custom-radio"></span>
+
+                                    <span>
+                                        <strong>{{ opt.label }}.</strong>
+                                        {{ opt.text }}
+                                    </span>
+
+                                </label>
+                                {% endfor %}
+
+                            {% endif %}
+
+                        </div>
 
                         {% endif %}
 
@@ -257,11 +322,20 @@
 
 </div>
 
+<!-- POPUP VALIDASI -->
+<div id="popup-alert" class="popup hidden">
+    <div class="popup-box">
+        <h3>Perhatian</h3>
+        <p id="popup-message"></p>
+        <button onclick="closePopup()">OK</button>
+    </div>
+</div>
+
 <!-- LOADING OVERLAY -->
 <div id="loading-overlay" class="loading-overlay hidden">
     <div class="loading-box">
         <div class="spinner"></div>
-        <p>Memproses jawaban...</p>
+        <p>Memproses jawaban<span class="dots"></span></p>
     </div>
 </div>
 
@@ -352,39 +426,116 @@ if(unsurSelect && selectArrow){
 
 }
 
-function nextSession(){
+function isValidEmail(email) {
+    const regex =
+        /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    return regex.test(email);
+}
 
-    // =========================
-    // VALIDASI UNSUR RESPONDEN
-    // =========================
+function showPopup(message) {
+    document.getElementById("popup-message").innerText = message;
+    document.getElementById("popup-alert").classList.remove("hidden");
+}
 
-    const unsurPage =
-        document.getElementById('unsur-page');
+function closePopup() {
+    document.getElementById("popup-alert").classList.add("hidden");
+}
 
-    if(
-        unsurPage &&
-        currentSession === 0
-    ){
+function nextSession() {
 
-        const unsurSelect =
-            document.getElementById(
-                'unsur-select'
-            );
+    const unsurPage = document.getElementById('unsur-page');
 
-        if(!unsurSelect.value){
-            alert(
-                'Silakan pilih unsur responden terlebih dahulu'
-            );
-            unsurSelect.focus();
+    if (unsurPage && currentSession === 0) {
+
+        const unsurSelect = document.getElementById('unsur-select');
+        const emailInput = document.getElementById('email-input');
+        const emailError = document.getElementById('email-error');
+
+        let messages = [];
+        let error = false;
+
+        // RESET
+        unsurSelect.classList.remove("input-error");
+
+        if (emailInput) {
+            emailInput.classList.remove("input-error");
+        }
+
+        if (emailError) {
+            emailError.classList.add("hidden");
+        }
+
+        // VALIDASI UNSUR
+        if (!unsurSelect.value) {
+            messages.push("Mohon pilih unsur responden.");
+            unsurSelect.classList.add("input-error");
+            error = true;
+        }
+
+        // VALIDASI EMAIL
+        if (emailInput) {
+
+            if (emailInput && emailError) {
+
+                if (!emailInput.value.trim()) {
+
+                    messages.push("Alamat email wajib diisi.");
+
+                    emailInput.classList.add("input-error");
+
+                    emailError.innerText =
+                        "Email tidak boleh kosong.";
+
+                    emailError.classList.remove("hidden");
+
+                    error = true;
+                }
+
+            } else if (!isValidEmail(emailInput.value.trim())) {
+
+                messages.push("Format email tidak valid.");
+
+                emailInput.classList.add("input-error");
+
+                emailError.innerText =
+                    "Gunakan format email yang benar.";
+
+                emailError.classList.remove("hidden");
+
+                error = true;
+            }
+        }
+
+        // POPUP JIKA ADA ERROR
+        if (error) {
+            showPopup(messages.join("\n"));
             return;
         }
     }
 
-    if(currentSession < sessions.length - 1){
-        currentSession++;
-        showSession(currentSession);
-    }
+    currentSession++;
+    showSession(currentSession);
 }
+
+document.addEventListener("input", e => {
+
+    if (e.target.id === "email-input") {
+
+        e.target.classList.remove("input-error");
+
+        const err =
+            document.getElementById("email-error");
+
+        if (err) {
+            err.classList.add("hidden");
+        }
+    }
+
+    if (e.target.id === "unsur-select") {
+        e.target.classList.remove("input-error");
+    }
+
+});
 
 document.querySelector("form").addEventListener(
     "submit",

@@ -1302,3 +1302,146 @@
 .switch-check input:checked + .slider::before {
     transform: translateX(20px);
 }
+
+/* =========================================
+   EMAIL REQUIRED CHOICE
+========================================= */
+
+.email-choice{
+    display:flex;
+    gap:12px;
+    margin-top:10px;
+    flex-wrap:wrap;
+}
+
+.radio-pill{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    min-width:220px;
+
+    padding:12px 14px;
+
+    background:#ffffff;
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+
+    cursor:pointer;
+    transition:all .2s ease;
+}
+
+.radio-pill:hover{
+    border-color:#003c22;
+    background:#f8fffb;
+    transform:translateY(-1px);
+}
+
+.radio-pill input[type="radio"]{
+    appearance:none;
+
+    width:18px;
+    height:18px;
+
+    border:2px solid #cbd5e1;
+
+    margin:0;
+
+    position:relative;
+    flex-shrink:0;
+
+    transition:.2s ease;
+}
+
+.radio-pill input[type="radio"]:checked{
+    border-color:#003c22;
+    background:#003c22;
+}
+
+.radio-pill input[type="radio"]:checked::after{
+    content:"";
+
+    position:absolute;
+
+    width:6px;
+    height:6px;
+
+    background:white;
+    border-radius:50%;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%, -50%);
+}
+
+.pill-content{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+}
+
+.pill-title{
+    font-size:13px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.pill-desc{
+    font-size:11px;
+    color:#64748b;
+    line-height:1.4;
+}
+
+/* ACTIVE STATE */
+.radio-pill:has(input:checked){
+    border-color:#003c22;
+    background:#f0fdf4;
+
+    box-shadow:
+        0 0 0 3px rgba(0,60,34,.06);
+}
+
+/* HALAMAN DETILE */
+/* =========================
+   SURVEY TITLE + DETAIL BTN
+========================= */
+
+.survey-title-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.survey-title{
+    color:#0f172a;
+    line-height:1.5;
+}
+
+.btn-detail-survey{
+    border:none;
+    background:#eef2ff;
+    color:#4338ca;
+
+    padding:8px 14px;
+
+    border-radius:10px;
+
+    font-size:12px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s ease;
+
+    white-space:nowrap;
+}
+
+.btn-detail-survey:hover{
+    background:#4338ca;
+    color:white;
+    transform:translateY(-1px);
+}
+

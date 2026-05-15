@@ -28,7 +28,23 @@
             {% for s in surveys %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ s.title }}</td>
+                <td>
+                    <div class="survey-title-box">
+
+                        <div class="survey-title">
+                            {{ s.title }}
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn-detail-survey"
+                            onclick="window.location.href='{{ url_for('detail_survey', survey_id=s.id) }}'"
+                        >
+                            Detail
+                        </button>
+
+                    </div>
+                </td>
                 <td>
                     <div class="tanggal-box">
                         <div class="tanggal-item">

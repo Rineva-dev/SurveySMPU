@@ -1,0 +1,370 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Detail Survey{% endblock %}
+
+{% block content %}
+
+<h2 class="title-header">
+    Detail Survey
+</h2>
+
+<!-- =========================
+    INFO SURVEY
+========================= -->
+
+<div class="card survey-hero-card">
+
+    <h3 class="survey-title-detail">
+        {{ survey.title }}
+    </h3>
+
+    <div class="survey-stats">
+
+        <!-- TOTAL RESPONDEN -->
+        <div class="survey-stat-box">
+
+            <div class="survey-stat-label">
+                Total Responden
+            </div>
+
+            <div class="survey-stat-inline">
+
+                <div class="survey-stat-icon">
+                    <i data-lucide="users"></i>
+                </div>
+
+                <div class="survey-stat-value">
+                    {{ responses|length }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- STATUS -->
+        <div class="survey-stat-box soft">
+
+            <div class="survey-stat-label">
+                Status Survey
+            </div>
+
+            <div class="survey-stat-inline">
+
+                <div class="survey-stat-icon soft">
+                    <i data-lucide="badge-check"></i>
+                </div>
+
+                <div class="
+                    survey-stat-badge
+                    {% if not survey.is_active %}
+                        danger
+                    {% elif survey.status == 'belum_mulai' %}
+                        warning
+                    {% elif survey.status == 'tutup' %}
+                        dark
+                    {% endif %}
+                ">
+
+                    {% if not survey.is_active %}
+
+                        <i data-lucide="x-circle"></i>
+                        Nonaktif
+
+                    {% elif survey.status == 'belum_mulai' %}
+
+                        <i data-lucide="clock-3"></i>
+                        Belum Dimulai
+
+                    {% elif survey.status == 'aktif' %}
+
+                        <i data-lucide="badge-check"></i>
+                        Aktif
+
+                    {% elif survey.status == 'tutup' %}
+
+                        <i data-lucide="lock"></i>
+                        Ditutup
+
+                    {% else %}
+
+                        <i data-lucide="alert-circle"></i>
+                        Tidak Valid
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================
+    LIST RESPONDEN
+========================= -->
+
+<div class="card">
+
+    <div class="detail-topbar">
+
+        <h3>
+            Daftar Responden
+        </h3>
+
+        <div class="response-nav">
+
+            <button
+                type="button"
+                class="nav-response-btn"
+                onclick="prevResponse()"
+            >
+                ←
+            </button>
+
+            <div class="response-counter">
+                <span id="currentIndex">1</span>
+                /
+                {{ responses|length }}
+            </div>
+
+            <button
+                type="button"
+                class="nav-response-btn"
+                onclick="nextResponse()"
+            >
+                →
+            </button>
+
+        </div>
+
+    </div>
+
+    {% if responses %}
+
+        {% for r in responses %}
+
+        <div
+            class="response-preview {% if not loop.first %}hidden{% endif %}"
+            data-response="{{ loop.index0 }}"
+        >
+
+            <!-- HEADER RESPONDEN -->
+            <div class="response-user-card">
+
+                <div>
+
+                    <div class="response-user-title">
+                        Responden {{ loop.index }}
+                    </div>
+
+                    <div class="response-user-email">
+                        {{ r.email or 'Tanpa Email' }}
+                    </div>
+
+                </div>
+
+                <!-- DELETE -->
+                <form
+                    action="{{ url_for('hapus_respon', response_id=r.id) }}"
+                    method="post"
+                    onsubmit="return confirm('Hapus respon ini?')"
+                >
+
+                    <button
+                        type="submit"
+                        class="icon-btn delete"
+                    >
+                        <i data-lucide="trash-2"></i>
+                    </button>
+
+                </form>
+
+            </div>
+
+            <!-- JAWABAN -->
+            <div class="response-answer-list">
+
+                {% set nomor = namespace(value=1) %}
+
+                {% for session in parsed_questions %}
+
+                    {% if session.title %}
+                        <div class="session-title">
+                            {{ session.title }}
+                        </div>
+                    {% endif %}
+
+                    {% for q in session.questions %}
+
+                        {% set answer_key = 'q' ~ nomor.value %}
+
+                        <div class="answer-item">
+
+                            <div class="answer-label">
+
+                                <span class="question-number">
+                                    {{ nomor.value }}.
+                                </span>
+
+                                <span class="question-text">
+                                    {{ q.text }}
+                                </span>
+
+                            </div>
+
+                            <div class="answer-value">
+
+                                {% if q.type == 'isian' and q.count > 1 %}
+
+                                    <ul style="margin:0;padding-left:18px;">
+
+                                        {% for i in range(q.count) %}
+
+                                            {% set multi_key = answer_key ~ '_' ~ i %}
+
+                                            <li>
+                                                {{ r.answers_json.get(multi_key) or '-' }}
+                                            </li>
+
+                                        {% endfor %}
+
+                                    </ul>
+
+                                {% else %}
+
+                                    {% set answer = r.answers_json.get(answer_key) %}
+
+                                    {% if answer is iterable and answer is not string %}
+
+                                        <ul style="margin:0;padding-left:18px;">
+
+                                            {% for item in answer %}
+
+                                                {% set selected_option =
+                                                    q.options
+                                                    | selectattr('label', 'equalto', item)
+                                                    | first
+                                                %}
+
+                                                <li>
+                                                    {{ item }}. 
+
+                                                    {% if selected_option %}
+                                                        {{ selected_option.text }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </li>
+
+                                            {% endfor %}
+
+                                        </ul>
+
+                                    {% else %}
+
+                                        {% if q.type == 'pilihan' %}
+
+                                            {% set selected_option =
+                                                q.options
+                                                | selectattr('label', 'equalto', answer)
+                                                | first
+                                            %}
+
+                                            {% if selected_option %}
+                                                {{ answer }}. 
+                                                {{ selected_option.text }}
+                                            {% else %}
+                                                {{ answer or '-' }}
+                                            {% endif %}
+
+                                        {% else %}
+
+                                            {{ answer or '-' }}
+
+                                        {% endif %}
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                        {% set nomor.value = nomor.value + 1 %}
+
+                    {% endfor %}
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty-response">
+            Belum ada responden.
+        </div>
+
+    {% endif %}
+
+</div>
+
+<script>
+
+let currentResponse = 0;
+
+const responses =
+    document.querySelectorAll('.response-preview');
+
+const counter =
+    document.getElementById('currentIndex');
+
+function showResponse(index){
+
+    responses.forEach((item, i) => {
+
+        if(i === index){
+            item.classList.remove('hidden');
+        } else {
+            item.classList.add('hidden');
+        }
+
+    });
+
+    counter.innerText = index + 1;
+}
+
+function nextResponse(){
+
+    if(currentResponse < responses.length - 1){
+
+        currentResponse++;
+
+        showResponse(currentResponse);
+
+    }
+
+}
+
+function prevResponse(){
+
+    if(currentResponse > 0){
+
+        currentResponse--;
+
+        showResponse(currentResponse);
+
+    }
+
+}
+
+</script>
+
+{% endblock %}
