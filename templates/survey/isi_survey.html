@@ -13,7 +13,6 @@
 <body>
 
 <div class="page-wrapper">
-
     {% if errors %}
     <div class="error-box">
         <div class="error-header">
@@ -34,6 +33,18 @@
         </ul>
     </div>
     {% endif %}
+
+    <div class="error-box hidden" id="client-error-box">
+        <div class="error-header">
+            <span class="error-icon">⚠️</span>
+            <div>
+                <strong>Beberapa pertanyaan belum dijawab</strong>
+                <p>Silakan lengkapi pertanyaan berikut sebelum menyimpan.</p>
+            </div>
+        </div>
+
+        <ul class="error-list" id="client-error-list"></ul>
+    </div>
 
     <form method="POST" action="/survey/{{ survey.id }}" class="survey-card">
 
@@ -166,7 +177,7 @@
 
         {% for session in sessions %}
 
-        <div class="session-page hidden">
+        <div class="session-page hidden" data-session-index="{{ loop.index0 }}">
 
             <div class="session-header">
                 <h2>{{ session.title }}</h2>
@@ -340,91 +351,49 @@
 </div>
 
 <script>
-let currentSession =
-    {{ error_session_index if errors else 0 }};
+const SKIP_INTRO = {{ skip_intro|default(false)|tojson }};
+const HAS_ERROR = {{ has_error|default(false)|tojson }};
+const ERROR_SESSION_INDEX = {{ error_session_index|default(0)|tojson }};
 
+const allPages = document.querySelectorAll('.session-page');
+const unsurPage = document.getElementById('unsur-page');
+const surveySessions =
+    document.querySelectorAll('.session-page[data-session-index]');
 
-const sessions =
-    document.querySelectorAll('.session-page');
+let currentSession = unsurPage ? -1 : 0;
 
-function showSession(index){
+function showSession(index) {
 
-    sessions.forEach((session, i) => {
+    // SEMBUNYIKAN SEMUA PAGE
+    allPages.forEach(p => p.classList.add('hidden'));
 
-        if(i === index){
-            session.classList.remove('hidden');
-        } else {
-            session.classList.add('hidden');
-        }
+    // JIKA ADA UNSUR DAN INDEX -1 → TAMPILKAN UNSUR
+    if (unsurPage && index === -1) {
+        unsurPage.classList.remove('hidden');
+        return;
+    }
 
-    });
+    const target = surveySessions[index];
+    if (!target) return;
 
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
+    target.classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
-// =========================
-// ANIMASI DROPDOWN ARROW
-// =========================
+const unsurPageExists = document.getElementById("unsur-page");
 
-const unsurSelect =
-    document.getElementById('unsur-select');
+// 🔥 JIKA ADA ERROR → LOMPAT KE SESSION ERROR PERTAMA
+if (HAS_ERROR) {
 
-const selectArrow =
-    document.getElementById('select-arrow');
-
-let isOpen = false;
-
-if(unsurSelect && selectArrow){
-
-    unsurSelect.addEventListener(
-        'mousedown',
-        () => {
-
-            isOpen = !isOpen;
-
-            if(isOpen){
-
-                selectArrow.classList.add('open');
-
-            } else {
-
-                selectArrow.classList.remove('open');
-
-            }
-
-        }
-    );
-
-    // saat memilih option
-    unsurSelect.addEventListener(
-        'change',
-        () => {
-
-            isOpen = false;
-
-            selectArrow.classList.remove('open');
-
-            unsurSelect.blur();
-
-        }
-    );
-
-    // klik luar
-    unsurSelect.addEventListener(
-        'blur',
-        () => {
-
-            isOpen = false;
-
-            selectArrow.classList.remove('open');
-
-        }
-    );
+    if (unsurPageExists) {
+        currentSession = ERROR_SESSION_INDEX + 1;
+    } else {
+        currentSession = ERROR_SESSION_INDEX;
+    }
 
 }
+
 
 function isValidEmail(email) {
     const regex =
@@ -443,9 +412,9 @@ function closePopup() {
 
 function nextSession() {
 
-    const unsurPage = document.getElementById('unsur-page');
+    const unsurPageExists = document.getElementById("unsur-page");
 
-    if (unsurPage && currentSession === 0) {
+    if (!SKIP_INTRO && unsurPageExists && currentSession === -1) {
 
         const unsurSelect = document.getElementById('unsur-select');
         const emailInput = document.getElementById('email-input');
@@ -475,21 +444,18 @@ function nextSession() {
         // VALIDASI EMAIL
         if (emailInput) {
 
-            if (emailInput && emailError) {
+            if (!emailInput.value.trim()) {
 
-                if (!emailInput.value.trim()) {
+                messages.push("Alamat email wajib diisi.");
 
-                    messages.push("Alamat email wajib diisi.");
+                emailInput.classList.add("input-error");
 
-                    emailInput.classList.add("input-error");
+                emailError.innerText =
+                    "Email tidak boleh kosong.";
 
-                    emailError.innerText =
-                        "Email tidak boleh kosong.";
+                emailError.classList.remove("hidden");
 
-                    emailError.classList.remove("hidden");
-
-                    error = true;
-                }
+                error = true;
 
             } else if (!isValidEmail(emailInput.value.trim())) {
 
@@ -511,10 +477,24 @@ function nextSession() {
             showPopup(messages.join("\n"));
             return;
         }
+        showMiniLoading();
     }
 
-    currentSession++;
-    showSession(currentSession);
+    if (currentSession < surveySessions.length - 1) {
+        currentSession++;
+        showSession(currentSession);
+    }
+}
+
+function showMiniLoading() {
+    const loading = document.getElementById("loading-overlay");
+    if (!loading) return;
+
+    loading.classList.remove("hidden");
+
+    setTimeout(() => {
+        loading.classList.add("hidden");
+    }, 500); // ⏱️ cepat, bukan loading submit
 }
 
 document.addEventListener("input", e => {
@@ -537,206 +517,186 @@ document.addEventListener("input", e => {
 
 });
 
-document.querySelector("form").addEventListener(
-    "submit",
-    function(){
+document.querySelector("form").addEventListener("submit", function (e) {
 
-        document
-            .querySelectorAll('.input-group')
-            .forEach(group => {
+    const loading = document.getElementById("loading-overlay");
+    const submitBtn = this.querySelector(".submit-btn");
 
-                if (group.dataset.required === "true") {
+    // 🔥 SELALU TAMPILKAN LOADING DULU
+    loading.classList.remove("hidden");
+    submitBtn.disabled = true;
 
-                    group
-                        .querySelectorAll('.isian-input')
-                        .forEach(input => {
+    const requiredGroups =
+        document.querySelectorAll(
+            '.session-page[data-session-index] .input-group[data-required="true"]'
+        );
 
-                            if (!input.value.trim()) {
-                                input.classList.add('input-error');
-                            } else {
-                                input.classList.remove('input-error');
-                            }
+    let firstErrorGroup = null;
+    const errorBox = document.getElementById("client-error-box");
+    const errorList = document.getElementById("client-error-list");
 
-                        });
+    errorList.innerHTML = "";
 
-                }
+    // 🔎 VALIDASI
+    requiredGroups.forEach(group => {
 
-            });
+        const inputs = group.querySelectorAll('.isian-input');
+        let empty = false;
 
-    }
-);
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const form =
-        document.querySelector("form");
-
-    const loading =
-        document.getElementById("loading-overlay");
-
-    if (!form || !loading) return;
-
-    form.addEventListener(
-        "submit",
-        () => {
-
-            // ⏳ TAMPILKAN LOADING
-            loading.classList.remove("hidden");
-
-            // 🔒 DISABLE TOMBOL SIMPAN (ANTI DOUBLE SUBMIT)
-            const submitBtn =
-                form.querySelector(".submit-btn");
-
-            if (submitBtn) {
-                submitBtn.disabled = true;
+        inputs.forEach(input => {
+            if (!input.value.trim()) {
+                empty = true;
+                input.classList.add("input-error");
+            } else {
+                input.classList.remove("input-error");
             }
+        });
 
-        }
-    );
-
-});
-
-function prevSession(){
-
-    if(currentSession > 0){
-
-        currentSession--;
-
-        showSession(currentSession);
-
-    }
-
-}
-
-// =========================
-// CUSTOM SELECT
-// =========================
-
-const customSelect =
-    document.getElementById('custom-select');
-
-const selected =
-    document.getElementById('select-selected');
-
-const optionsContainer =
-    document.getElementById('select-options');
-
-const options =
-    document.querySelectorAll('.select-option');
-
-const hiddenInput =
-    document.getElementById('unsur-select');
-
-const arrow =
-    document.getElementById('select-arrow');
-
-// OPEN / CLOSE
-selected.addEventListener(
-    'click',
-    () => {
-
-        optionsContainer.classList.toggle('hidden');
-
-        selected.classList.toggle('active');
-
-        arrow.classList.toggle('open');
-
-    }
-);
-
-// SELECT OPTION
-options.forEach(option => {
-
-    option.addEventListener(
-        'click',
-        () => {
-
-            const value =
-                option.dataset.value;
-
-            hiddenInput.value = value;
-
-            selected.querySelector('span').innerText =
-                value;
-
-            optionsContainer.classList.add('hidden');
-
-            selected.classList.remove('active');
-
-            arrow.classList.remove('open');
-
-        }
-    );
-
-});
-
-// CLOSE OUTSIDE
-document.addEventListener(
-    'click',
-    (e) => {
-
-        if(!customSelect.contains(e.target)){
-
-            optionsContainer.classList.add('hidden');
-
-            selected.classList.remove('active');
-
-            arrow.classList.remove('open');
-
+        if (empty && !firstErrorGroup) {
+            firstErrorGroup = group;
         }
 
-    }
-);
+        if (empty) {
+            const card = group.closest(".question-card");
+            const number =
+                card.querySelector(".question-number")?.innerText ?? "?";
+            const text =
+                card.querySelector(".question-text")?.innerText ?? "Pertanyaan";
 
-function validateAllIsianWajib() {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <span class="error-number">${number}</span>
+                <span class="error-text">${text}</span>
+            `;
 
-    let errors = [];
-
-    const groups =
-        document.querySelectorAll('.input-group');
-
-    groups.forEach(group => {
-
-        if (group.dataset.required === "true") {
-
-            const inputs =
-                group.querySelectorAll('.isian-input');
-
-            let kosong = false;
-
-            inputs.forEach(input => {
-                if (!input.value.trim()) {
-                    kosong = true;
-                    input.classList.add('input-error');
-                } else {
-                    input.classList.remove('input-error');
-                }
-            });
-
-            if (kosong) {
-                const questionCard =
-                    group.closest('.question-card');
-
-                const number =
-                    questionCard.querySelector(
-                        '.question-number'
-                    ).innerText;
-
-                const text =
-                    questionCard.querySelector(
-                        '.question-text'
-                    ).innerText;
-
-                errors.push({
-                    number,
-                    text
+            li.addEventListener("click", () => {
+                card.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
                 });
-            }
+            });
+
+            errorList.appendChild(li);
         }
     });
 
-    return errors;
+    // ❌ JIKA ADA ERROR
+    if (firstErrorGroup) {
+
+        // ⏳ BIAR LOADING KELIHATAN (WOW)
+        setTimeout(() => {
+
+            loading.classList.add("hidden");
+            submitBtn.disabled = false;
+
+            errorBox.classList.remove("hidden");
+
+            const sessionPage =
+                firstErrorGroup.closest(".session-page");
+
+            const sessionIndex =
+                parseInt(sessionPage.dataset.sessionIndex, 10);
+
+            currentSession = sessionIndex;
+            showSession(currentSession);
+
+            setTimeout(() => {
+                firstErrorGroup
+                    .closest(".question-card")
+                    .scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+            }, 200);
+
+        }, 600); // ⏱ delay bikin terasa "diproses"
+
+        e.preventDefault();
+        return;
+    }
+
+    // ✅ LOLOS → FORM DIKIRIM (LOADING TETAP)
+});
+
+
+function prevSession() {
+
+    if (currentSession > -1) {
+        currentSession--;
+        showSession(currentSession);
+    }
+
 }
+
+// =========================
+// CUSTOM SELECT (SAFE)
+// =========================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const customSelect =
+        document.getElementById('custom-select');
+
+    if (!customSelect) return; // ⛔ UNSUR TIDAK ADA → STOP
+
+    const selected =
+        document.getElementById('select-selected');
+
+    const optionsContainer =
+        document.getElementById('select-options');
+
+    const options =
+        document.querySelectorAll('.select-option');
+
+    const hiddenInput =
+        document.getElementById('unsur-select');
+
+    const arrow =
+        document.getElementById('select-arrow');
+
+    // OPEN / CLOSE
+    selected.addEventListener('click', () => {
+
+        optionsContainer.classList.toggle('hidden');
+        selected.classList.toggle('active');
+        arrow.classList.toggle('open');
+
+    });
+
+    // SELECT OPTION
+    options.forEach(option => {
+
+        option.addEventListener('click', () => {
+
+            const value = option.dataset.value;
+
+            hiddenInput.value = value;
+
+            selected.querySelector('span').innerText = value;
+
+            optionsContainer.classList.add('hidden');
+            selected.classList.remove('active');
+            arrow.classList.remove('open');
+
+        });
+
+    });
+
+    // CLOSE OUTSIDE
+    document.addEventListener('click', (e) => {
+
+        if (!customSelect.contains(e.target)) {
+
+            optionsContainer.classList.add('hidden');
+            selected.classList.remove('active');
+            arrow.classList.remove('open');
+
+        }
+
+    });
+
+});
+
 
 // =========================
 // INIT
@@ -756,7 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     numbers.forEach(el => {
         if(el.textContent.trim() === errorNumber){
             el.closest(".question-card").scrollIntoView({
-                behavior: "smooth",
+                behavior: "auto",
                 block: "center"
             });
         }

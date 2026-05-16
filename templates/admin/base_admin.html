@@ -21,6 +21,19 @@
 </head>
 <body>
 
+<!-- MODAL CUSTOM -->
+<div id="customModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <h3 id="modalTitle">Konfirmasi</h3>
+        <p id="modalMessage"></p>
+
+        <div class="modal-actions">
+        <button id="modalCancel" class="btn-cancel">Batal</button>
+        <button id="modalOk" class="btn-ok">OK</button>
+        </div>
+    </div>
+</div>
+
 <div class="sidebar">
 
     <div class="sidebar-header">
@@ -133,14 +146,17 @@
 <script>
 const loading = document.getElementById("globalLoading");
 
-// TAMPILKAN SAAT SUBMIT FORM
 document.querySelectorAll("form").forEach(form => {
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", (e) => {
+
+        if (form.classList.contains("confirm-delete")) {
+            return;
+        }
+
         loading.style.display = "flex";
     });
 });
 
-// TAMPILKAN SAAT KLIK LINK (KECUALI LOGOUT & ANCHOR)
 document.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", (e) => {
         const href = link.getAttribute("href");
@@ -154,6 +170,51 @@ document.querySelectorAll("a").forEach(link => {
         }
     });
 });
+
+function showModal({ title, message, onOk, onCancel }) {
+    const modal = document.getElementById("customModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalMessage = document.getElementById("modalMessage");
+    const btnOk = document.getElementById("modalOk");
+    const btnCancel = document.getElementById("modalCancel");
+
+    modalTitle.innerText = title;
+    modalMessage.innerHTML = message;
+
+    modal.classList.remove("hidden");
+
+    btnOk.onclick = () => {
+        modal.classList.add("hidden");
+        onOk && onOk();
+    };
+
+    btnCancel.onclick = () => {
+        modal.classList.add("hidden");
+        onCancel && onCancel();
+    };
+}
+
+function hideLoading() {
+    const loading = document.getElementById("globalLoading");
+    if (loading) {
+        loading.style.display = "none";
+    }
+}
+
+window.addEventListener("pageshow", function (event) {
+    hideLoading();
+
+    if (event.persisted) {
+        hideLoading();
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        hideLoading();
+    }
+});
+
 </script>
 </body>
 </html>

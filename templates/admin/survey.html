@@ -92,9 +92,7 @@
                         <!-- DELETE -->
                         <form action="/admin/survey/{{ s.id }}/hapus"
                             method="post"
-                            class="inline-form"
-                            onsubmit="return confirm('Yakin ingin menghapus survey ini?')">
-
+                            class="inline-form confirm-delete">
                             <button type="submit"
                                 class="icon-btn delete"
                                 title="Hapus">
@@ -167,6 +165,29 @@ function openShareModal(link) {
 function closeShareModal() {
     document.getElementById("shareModal").classList.add("hidden");
 }
+
+document.querySelectorAll(".confirm-delete").forEach(form => {
+
+    form.addEventListener("submit", function (e) {
+        e.preventDefault(); // ⛔ STOP submit
+
+        showModal({
+            title: "⚠️ Konfirmasi Hapus",
+            message: `
+                <b>Yakin ingin menghapus survey ini?</b><br>
+                Data yang dihapus tidak dapat dikembalikan.
+            `,
+            onOk: () => {
+                loading.style.display = "flex";
+                document.getElementById("modalOk").disabled = true;
+                form.submit();
+            },
+            onCancel: () => {
+            }
+        });
+    });
+
+});
 
 function showToast(message = "Link berhasil disalin") {
     const toast = document.getElementById("toast");

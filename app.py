@@ -1,4 +1,4 @@
-from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file
+from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file, jsonify
 from datetime import datetime
 from markupsafe import Markup
 import json, os
@@ -7,6 +7,7 @@ import io, uuid
 from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 from dotenv import load_dotenv
+from collections import Counter
 
 load_dotenv()
 
@@ -105,6 +106,10 @@ class SurveyResponse(db.Model):
         db.String(30)
     )
 
+    @property
+    def answers_json(self):
+        return json.loads(self.answers or "{}")
+    
 # -----------------------------
 # LOGIN ADMIN
 # -----------------------------
@@ -155,6 +160,90 @@ def admin_dashboard():
 
         active_page="dashboard"
     )
+
+@app.route('/dashboard/chart-data/<int:survey_id>/<int:q_index>')
+def dashboard_chart_data(survey_id, q_index):
+
+    survey = Survey.query.get_or_404(survey_id)
+
+    questions = json.loads(survey.questions or "[]")
+
+    target_question = None
+
+    nomor = 1
+
+    for section in questions:
+        for q in section.get("questions", []):
+
+            if nomor == q_index:
+                target_question = q
+                break
+
+            nomor += 1
+
+    if not target_question:
+        return jsonify({
+            "type": "empty"
+        })
+
+    # =========================
+    # ISIAN
+    # =========================
+    if target_question.get("type") == "isian":
+
+        return jsonify({
+            "type": "text"
+        })
+
+    # =========================
+    # PILIHAN
+    # =========================
+
+    responses = SurveyResponse.query.filter_by(
+        survey_id=survey_id
+    ).all()
+
+    counter = Counter()
+
+    answer_key = f"q{q_index}"
+
+    label_map = {}
+
+    for opt in target_question.get("options", []):
+        label_map[opt["label"]] = opt["text"]
+
+    for r in responses:
+        answers = json.loads(r.answers or "{}")
+        answer = answers.get(answer_key)
+
+        if not answer:
+            continue
+
+        # MULTIPLE CHOICE
+        if isinstance(answer, list):
+
+            for item in answer:
+                counter[item] += 1
+
+        # SINGLE CHOICE
+        else:
+            counter[answer] += 1
+
+    labels = []
+    values = []
+
+    for label, total in counter.items():
+
+        option_text = label_map.get(label, label)
+
+        labels.append(f"{label}. {option_text}")
+        values.append(total)
+
+    return jsonify({
+        "type": "chart",
+        "labels": labels,
+        "values": values
+    })
 
 @app.route("/survey")
 def admin_survey():
@@ -528,6 +617,15 @@ def survey_responden(survey_id):
     errors = []
 
     survey = Survey.query.get_or_404(survey_id)
+    skip_intro = session.get(f"survey_{survey_id}_skip_intro", False)
+
+    if f"survey_{survey_id}_skip_intro" not in session:
+        unsur_list = json.loads(survey.unsur_responden or '["Semua"]')
+
+        session[f"survey_{survey_id}_skip_intro"] = (
+            (not survey.email_enabled)
+            and (unsur_list == ["Semua"] or len(unsur_list) == 0)
+        )
 
     # =========================
     # CEK STATUS SURVEY
@@ -634,16 +732,9 @@ def survey_responden(survey_id):
 
         # JIKA ADA ERROR
         if errors:
-            show_unsur = (
-                survey.unsur_responden
-                and len(json.loads(survey.unsur_responden)) > 0
-                and "Semua" not in json.loads(survey.unsur_responden)
-            )
+            pass
 
-            if show_unsur:
-                error_session_index += 1
-
-            survey.unsur_responden = json.loads(
+            unsur_list = json.loads(
                 survey.unsur_responden or '["Semua"]'
             )
 
@@ -657,7 +748,9 @@ def survey_responden(survey_id):
                 old=request.form,
                 selected_unsur=unsur_responden,
                 error_session_index=error_session_index,
-                token=token
+                token=token,
+                skip_intro=True,
+                has_error=True,
             )
 
         # SIMPAN JAWABAN
@@ -728,7 +821,8 @@ def survey_responden(survey_id):
         "survey/isi_survey.html",
         survey=survey,
         sessions=sessions,
-        token=request.args.get("token")
+        token=request.args.get("token"),
+        skip_intro=skip_intro
     )
 
 @app.route("/survey/<int:survey_id>/pembuka")
@@ -754,9 +848,17 @@ def survey_intro(survey_id):
 def survey_start(survey_id):
 
     survey = Survey.query.get_or_404(survey_id)
-
     if not survey.is_active:
         abort(404)
+
+    unsur_list = json.loads(survey.unsur_responden or '["Semua"]')
+
+    skip_intro = (
+        (not survey.email_enabled)
+        and (unsur_list == ["Semua"] or len(unsur_list) == 0)
+    )
+
+    session[f"survey_{survey_id}_skip_intro"] = skip_intro
 
     # 🔐 token sekali pakai
     token = str(uuid.uuid4())

@@ -85,7 +85,7 @@
         </div>
 
         <div class="select-wrapper">
-            <select id="surveySelect" onchange="loadChart()">
+            <select id="surveySelect">
                 <option value="">Pilih Survey</option>
 
                 {% for survey in surveys %}
@@ -94,11 +94,17 @@
                     </option>
                 {% endfor %}
             </select>
+            <select id="questionSelect">
+                <option value="">Pilih Pertanyaan</option>
+            </select>
         </div>
     </div>
 
     <div class="chart-wrapper">
         <canvas id="surveyChart"></canvas>
+        <div id="chart-empty" class="hidden empty-chart">
+            Pilihan tidak tersedia untuk pertanyaan isian.
+        </div>
     </div>
 
 </div>
@@ -148,40 +154,103 @@
 
 let chart;
 
-function loadChart() {
+// =========================
+// LOAD PERTANYAAN
+// =========================
+async function loadQuestions() {
 
     const surveyId =
         document.getElementById("surveySelect").value;
 
+    const questionSelect =
+        document.getElementById("questionSelect");
+
+    questionSelect.innerHTML =
+        `<option value="">Pilih Pertanyaan</option>`;
+
     if (!surveyId) return;
 
-    // DATA DUMMY
-    const labels = [
-        "Sangat Puas",
-        "Puas",
-        "Cukup",
-        "Tidak Puas"
-    ];
+    const res =
+        await fetch(`/dashboard/questions/${surveyId}`);
 
-    const data = [12, 25, 8, 3];
+    const data = await res.json();
+
+    data.forEach(q => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = q.index;
+        option.textContent = q.text;
+
+        questionSelect.appendChild(option);
+
+    });
+
+}
+
+// =========================
+// LOAD CHART
+// =========================
+async function loadChart() {
+
+    const surveyId =
+        document.getElementById("surveySelect").value;
+
+    const qIndex =
+        document.getElementById("questionSelect").value;
+
+    if (!surveyId || !qIndex) return;
+
+    const res =
+        await fetch(`/dashboard/chart-data/${surveyId}/${qIndex}`);
+
+    const data = await res.json();
+
+    const canvas =
+        document.getElementById("surveyChart");
+
+    const empty =
+        document.getElementById("chart-empty");
+
+    // =========================
+    // ISIAN (NO CHART)
+    // =========================
+    if (data.type === "text") {
+
+        if (chart) {
+            chart.destroy();
+            chart = null;
+        }
+
+        canvas.style.display = "none";
+        empty.classList.remove("hidden");
+        empty.innerHTML = "Pertanyaan ini berupa isian bebas, tidak memiliki grafik.";
+
+        return;
+    }
+
+    // =========================
+    // CHART
+    // =========================
+    canvas.style.display = "block";
+    empty.classList.add("hidden");
 
     if (chart) {
         chart.destroy();
     }
 
     const ctx =
-        document.getElementById("surveyChart").getContext("2d");
+        canvas.getContext("2d");
 
     chart = new Chart(ctx, {
 
         type: "bar",
 
         data: {
-            labels: labels,
-
+            labels: data.labels,
             datasets: [{
-                label: "Jumlah Responden",
-                data: data,
+                data: data.values,
                 borderRadius: 10
             }]
         },
@@ -204,6 +273,31 @@ function loadChart() {
 
     });
 }
+
+document.getElementById("surveySelect").addEventListener("change", () => {
+    loadQuestions();
+});
+
+document.getElementById("questionSelect").addEventListener("change", () => {
+    loadChart();
+});
+
+document.getElementById("surveySelect").addEventListener("change", () => {
+
+    const questionSelect = document.getElementById("questionSelect");
+
+    questionSelect.innerHTML = `<option value="">Pilih Pertanyaan</option>`;
+
+    if (chart) {
+        chart.destroy();
+        chart = null;
+    }
+
+    document.getElementById("surveyChart").style.display = "block";
+    document.getElementById("chart-empty").classList.add("hidden");
+
+    loadQuestions();
+});
 
 </script>
 
