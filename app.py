@@ -338,12 +338,21 @@ def admin_survey_tambah():
 
             for j in range(len(texts_opt)):
 
-                options.append({
-                    "label": labels[j]
-                        if j < len(labels)
-                        else "",
+                label = (
+                    labels[j].strip()
+                    if j < len(labels)
+                    else ""
+                )
 
-                    "text": texts_opt[j]
+                text = texts_opt[j].strip()
+
+                # skip option kosong
+                if not label and not text:
+                    continue
+
+                options.append({
+                    "label": label,
+                    "text": text
                 })
 
             q = {
@@ -475,9 +484,6 @@ def edit_survey(survey_id):
         types = request.form.getlist("type[]")
 
         counts = request.form.getlist("count[]")
-        question_indexes = request.form.getlist(
-            "question_index[]"
-        )
 
         question_indexes = request.form.getlist(
             "question_index[]"
@@ -504,12 +510,21 @@ def edit_survey(survey_id):
 
             for j in range(len(texts_opt)):
 
-                options.append({
-                    "label": labels[j]
-                        if j < len(labels)
-                        else "",
+                label = (
+                    labels[j].strip()
+                    if j < len(labels)
+                    else ""
+                )
 
-                    "text": texts_opt[j]
+                text = texts_opt[j].strip()
+
+                # skip option kosong
+                if not label and not text:
+                    continue
+
+                options.append({
+                    "label": label,
+                    "text": text
                 })
 
             q = {
@@ -569,9 +584,6 @@ def detail_survey(survey_id):
     ).order_by(
         SurveyResponse.id.asc()
     ).all()
-
-    for r in responses:
-        r.answers_json = json.loads(r.answers or "{}")
 
     parsed_questions = json.loads(
         survey.questions or "[]"
@@ -906,13 +918,6 @@ def download_survey(survey_id):
     # HEADER
     # =====================================
 
-    header_top = [
-        "No",
-        "Tanggal",
-        "Unsur Responden",
-        "Email"
-    ]
-
     header_bottom = []
 
     sessions = json.loads(
@@ -921,7 +926,50 @@ def download_survey(survey_id):
 
     question_keys = []
 
-    current_col = 4
+    # kolom awal
+    base_headers = [
+        ("No", True),
+        ("Tanggal", True)
+    ]
+
+    # cek unsur responden
+    unsur_list = json.loads(
+        survey.unsur_responden or "[]"
+    )
+
+    show_unsur = (
+        unsur_list
+        and unsur_list != ["Semua"]
+    )
+
+    if show_unsur:
+        base_headers.append(
+            ("Unsur Responden", True)
+        )
+
+    # cek email
+    if survey.email_enabled:
+        base_headers.append(
+            ("Email", True)
+        )
+
+    # tulis header awal
+    for idx, (title, merge) in enumerate(base_headers, start=1):
+
+        col_letter = get_column_letter(idx)
+
+        if merge:
+            ws.merge_cells(
+                f"{col_letter}1:{col_letter}2"
+            )
+
+        ws.cell(
+            row=1,
+            column=idx
+        ).value = title
+
+    # posisi mulai pertanyaan
+    current_col = len(base_headers) + 1
 
     counter = 1
 
@@ -937,12 +985,15 @@ def download_survey(survey_id):
             q_type = q.get("type")
 
             # =========================
-            # ISIAN MULTI
+            # ISIAN MULTI + RANKING
             # =========================
 
-            if q_type == "isian":
+            if q_type in ["isian", "ranking"]:
 
-                count = q.get("count", 1)
+                if q_type == "ranking":
+                    count = len(q.get("options", []))
+                else:
+                    count = q.get("count", 1)
 
                 start_col = current_col
                 end_col = current_col + count - 1
@@ -962,14 +1013,17 @@ def download_survey(survey_id):
 
                 for i in range(count):
 
-                    header_bottom.append(
-                        f"Jawaban {i+1}"
-                    )
-
-                    header_top.append("")
+                    if q_type == "ranking":
+                        header_bottom.append(
+                            f"Ranking {i+1}"
+                        )
+                    else:
+                        header_bottom.append(
+                            f"Jawaban {i+1}"
+                        )
 
                     question_keys.append(
-                        f"q{counter}_{i}"
+                        f"q{counter}"
                     )
 
                     current_col += 1
@@ -996,27 +1050,25 @@ def download_survey(survey_id):
                     f"q{counter}"
                 )
 
-                header_top.append("")
                 header_bottom.append("")
 
                 current_col += 1
 
             counter += 1
 
-    # HEADER AWAL MERGE
-    ws.merge_cells("A1:A2")
-    ws.merge_cells("B1:B2")
-    ws.merge_cells("C1:C2")
-
-    # isi header utama
-    ws["A1"] = "No"
-    ws["B1"] = "Tanggal"
-    ws["C1"] = "Unsur Responden"
-    ws["D1"] = "Email"
 
     # append header row 2
     for idx, value in enumerate(header_bottom):
-        ws.cell(row=2, column=4 + idx).value = value
+
+        col = len(base_headers) + 1 + idx
+
+        cell = ws.cell(row=2, column=col)
+
+        # skip jika merged cell
+        if cell.__class__.__name__ == "MergedCell":
+            continue
+
+        cell.value = value
 
 
     # =====================================
@@ -1055,16 +1107,161 @@ def download_survey(survey_id):
 
         row = [
             idx,
-            r.created_at,
-            r.unsur_responden,
-            r.email or ""
+            r.created_at
         ]
 
-        for key in question_keys:
-
+        if show_unsur:
             row.append(
-                answer_data.get(key, "")
+                r.unsur_responden or ""
             )
+
+        if survey.email_enabled:
+            row.append(
+                r.email or ""
+            )
+
+        counter = 1
+
+        for session_item in sessions:
+
+            for q in session_item.get(
+                "questions",
+                []
+            ):
+
+                key = f"q{counter}"
+
+                value = answer_data.get(
+                    key,
+                    ""
+                )
+
+                # =====================
+                # OPTION MAP
+                # =====================
+
+                option_map = {}
+
+                for opt in q.get(
+                    "options",
+                    []
+                ):
+
+                    option_map[
+                        opt.get("label")
+                    ] = opt.get("text")
+
+                # =====================
+                # ISIAN
+                # =====================
+
+                if q.get("type") == "isian":
+
+                    count = q.get("count", 1)
+
+                    # MULTI INPUT
+                    if count > 1:
+
+                        for i in range(count):
+
+                            multi_key = f"{key}_{i}"
+
+                            row.append(
+                                answer_data.get(multi_key, "")
+                            )
+
+                    # SINGLE INPUT
+                    else:
+
+                        row.append(
+                            answer_data.get(key, "")
+                        )
+
+                # =====================
+                # RANKING
+                # =====================
+
+                elif q.get("type") == "ranking":
+
+                    ranking_result = []
+
+                    for i in range(len(q.get("options", []))):
+
+                        rank_key = f"{key}_rank_{i}"
+                        text_key = f"{key}_text_{i}"
+
+                        rank_value = answer_data.get(rank_key)
+                        text_value = answer_data.get(text_key)
+
+                        if rank_value and text_value:
+
+                            ranking_result.append({
+                                "rank": int(rank_value),
+                                "text": text_value
+                            })
+
+                    ranking_result = sorted(
+                        ranking_result,
+                        key=lambda x: x["rank"]
+                    )
+
+                    total_ranking = len(q.get("options", []))
+
+                    for i in range(total_ranking):
+
+                        if i < len(ranking_result):
+
+                            item = ranking_result[i]
+
+                            row.append(
+                                item["text"]
+                            )
+
+                        else:
+                            row.append("")
+
+                # =====================
+                # MULTIPLE CHOICE
+                # =====================
+
+                elif isinstance(value, list):
+
+                    hasil = []
+
+                    for item in value:
+
+                        teks = option_map.get(
+                            item,
+                            item
+                        )
+
+                        hasil.append(
+                            f"{item}. {teks}"
+                        )
+
+                    row.append(
+                        ", ".join(hasil)
+                    )
+
+                # =====================
+                # SINGLE CHOICE
+                # =====================
+
+                else:
+
+                    teks = option_map.get(
+                        value,
+                        value
+                    )
+
+                    if value:
+                        row.append(
+                            f"{value}. {teks}"
+                        )
+                    else:
+                        row.append("")
+
+                counter += 1
 
         ws.append(row)
 

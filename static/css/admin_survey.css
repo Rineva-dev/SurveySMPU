@@ -105,7 +105,6 @@
     font-size: 14px;
     border-radius: 8px;
     border: 1px solid #d1d5db;
-    margin-bottom: 8px;
 }
 
 /* ===============================
@@ -173,16 +172,25 @@
 .tanggal-item {
     display: flex;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
 }
 
 .tanggal-item .label {
     font-weight: 600;
     color: #374151;
+    flex-shrink: 0;
 }
 
 .tanggal-item .value {
     color: #111827;
+    min-width: 0;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* =========================
@@ -320,7 +328,6 @@
     border-radius: 12px;
     padding: 14px;
     transition: all 0.2s ease;
-    margin-bottom: 20px;
 }
 
 .date-card:hover {
@@ -371,7 +378,8 @@
 .form-row-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .table-survey td.aksi{
@@ -977,8 +985,6 @@
     display:flex;
     align-items:center;
     gap:12px;
-
-    margin-bottom:12px;
 }
 
 .option-label{
@@ -1206,6 +1212,14 @@
         flex-direction:column;
     }
 
+    .card {
+        overflow-x: hidden;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+
 }
 
 .add-session-btn{
@@ -1310,7 +1324,6 @@
 .email-choice{
     display:flex;
     gap:12px;
-    margin-top:10px;
     flex-wrap:wrap;
 }
 
@@ -1445,3 +1458,109 @@
     transform:translateY(-1px);
 }
 
+.rank-item button {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.rank-label {
+    float: right;
+    font-weight: bold;
+    color: green;
+}
+
+.ranking-option {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-remove-option {
+    background: #ff4d4f !important;
+    color: white !important;
+    border: none !important;
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    width: 30px !important;
+    height: 30px !important;
+}
+
+/* ===============================
+   BUTTON ADD RANKING OPTION
+================================= */
+
+.btn-add-option,
+.btn-add-ranking{
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 16px;
+
+    border: 1px solid #dbe4ff;
+    border-radius: 12px;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #f8fbff 100%
+    );
+
+    color: #2563eb;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all .22s ease;
+
+    box-shadow:
+        0 1px 2px rgba(15,23,42,.04),
+        0 4px 12px rgba(37,99,235,.06);
+}
+
+.btn-add-option:hover,
+.btn-add-ranking:hover{
+
+    transform: translateY(-1px);
+
+    border-color: #bfdbfe;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #eef5ff 100%
+    );
+}
+
+.btn-add-option:active,
+.btn-add-ranking:active{
+    transform: scale(.98);
+}
+
+.btn-add-icon{
+
+    width: 22px;
+    height: 22px;
+
+    border-radius: 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    line-height: 1;
+}

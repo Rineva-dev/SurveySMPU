@@ -82,6 +82,19 @@ document.querySelector("form").addEventListener("submit", function () {
         btn.style.opacity = "0.7";
     }
 });
+window.addEventListener("pageshow", function (event) {
+    const loading = document.getElementById("loading");
+
+    if (loading) {
+        loading.style.display = "none";
+    }
+
+    const btn = document.querySelector("button");
+    if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    }
+});
 </script>
 </body>
 </html>

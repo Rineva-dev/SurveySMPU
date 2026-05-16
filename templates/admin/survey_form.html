@@ -212,19 +212,10 @@
                     <label>Jenis Jawaban</label>
 
                     <select onchange="handleAnswerType(this)">
-
-                        <option value="">
-                            -- Pilih --
-                        </option>
-
-                        <option value="isian">
-                            Isian
-                        </option>
-
-                        <option value="pilihan">
-                            Pilihan
-                        </option>
-
+                        <option value="">Pilih Jenis Jawaban</option>
+                        <option value="isian">Isian</option>
+                        <option value="pilihan">Pilihan</option>
+                        <option value="ranking">Ranking (Prioritas)</option>
                     </select>
 
                     <input type="hidden" class="question-type">
@@ -279,14 +270,25 @@
 
                             <button
                                 type="button"
-                                onclick="addAnswer(this)"
+                                class="btn-remove-option"
+                                onclick="removeAnswer(this)"
                             >
-                                +
+                                ×
                             </button>
 
                         </div>
 
                     </div>
+
+                    <!-- BTN TAMBAH -->
+                    <button
+                        type="button"
+                        class="btn-add-option"
+                        onclick="addAnswer(this)"
+                    >
+                        <span class="btn-add-icon">+</span>
+                        <span>Tambah Opsi</span>
+                    </button>
 
                     <input
                         type="hidden"
@@ -340,9 +342,23 @@
 
                 </div>
 
+                <!-- RANKING -->
+                <div class="answer-box hidden ranking-box">
+                    <label>Opsi Ranking</label>
+                    <small>Tambahkan opsi yang akan diurutkan oleh responden</small>
+                    <div class="ranking-option-list"></div>
+                    <button
+                        type="button"
+                        class="btn-add-ranking"
+                        onclick="addRankingOption(this)"
+                    >
+                        <span class="btn-add-icon">+</span>
+                        <span>Tambah Opsi</span>
+                    </button>
+                </div>
+
                 <div class="form-group required-toggle">
                     <label>Wajib Diisi?</label>
-
                     <label class="switch-check">
                         <input type="checkbox" name="is_required[]" value="1">
                         <span class="slider"></span>
@@ -568,6 +584,80 @@ function addQuestion(button) {
     container.appendChild(clone);
 }
 
+function addRankingOption(btn) {
+
+    const box =
+        btn.closest('.ranking-box');
+
+    const list =
+        box.querySelector('.ranking-option-list');
+
+    const card =
+        btn.closest('.question-card');
+
+    const qIndex =
+        card.dataset.index;
+
+    const index =
+        list.children.length;
+
+    const label =
+        String.fromCharCode(97 + index);
+
+    const div =
+        document.createElement('div');
+
+    div.className =
+        'answer-row ranking-option';
+
+    div.innerHTML = `
+        <span class="rank-number">
+            ${index + 1}.
+        </span>
+
+        <input
+            type="hidden"
+            name="option_label[${qIndex}][]"
+            value="${label}"
+        >
+
+        <input
+            type="text"
+            name="option_text[${qIndex}][]"
+            placeholder="Opsi ranking ${index + 1}"
+        >
+
+        <button
+            type="button"
+            class="btn-remove-option"
+            onclick="removeRankingOption(this)"
+        >
+            ×
+        </button>
+    `;
+
+    list.appendChild(div);
+}
+
+function removeRankingOption(btn) {
+    const row = btn.closest('.ranking-option');
+    const list = row.closest('.ranking-option-list');
+
+    row.remove();
+
+    // update ulang nomor urut
+    const items = list.querySelectorAll('.ranking-option');
+
+    items.forEach((item, i) => {
+        item.querySelector('.rank-number').innerText = (i + 1) + '.';
+
+        const input = item.querySelector('input[type="text"]');
+        if (input) {
+            input.placeholder = `Opsi ranking ${i + 1}`;
+        }
+    });
+}
+
 function addSession() {
 
     const container =
@@ -666,6 +756,9 @@ function handleAnswerType(select) {
         countInput.name = "count[]";
     }
 
+    if (select.value === 'ranking') {
+        boxes[2].classList.remove('hidden');
+    }
 }
 
 function changeMode(radio) {
@@ -687,22 +780,33 @@ function getOptionLabel(index) {
 
 function addAnswer(btn) {
 
-    const list = btn.closest('.answer-list');
+    const box =
+        btn.closest('.answer-box');
 
-    const card = btn.closest('.question-card');
+    const list =
+        box.querySelector('.answer-list');
 
-    const qIndex = card.dataset.index;
+    const card =
+        btn.closest('.question-card');
 
-    const rows = list.querySelectorAll('.answer-row');
+    const qIndex =
+        card.dataset.index;
 
-    const label = String.fromCharCode(97 + rows.length);
+    const rows =
+        list.querySelectorAll('.answer-row');
 
-    const row = document.createElement('div');
+    const label =
+        String.fromCharCode(97 + rows.length);
+
+    const row =
+        document.createElement('div');
 
     row.className = 'answer-row';
 
     row.innerHTML = `
-        <span class="option-label">${label}.</span>
+        <span class="option-label">
+            ${label}.
+        </span>
 
         <input
             type="hidden"
@@ -718,20 +822,57 @@ function addAnswer(btn) {
 
         <button
             type="button"
-            onclick="addAnswer(this)">
-            +
+            class="btn-remove-option"
+            onclick="removeAnswer(this)"
+        >
+            ×
         </button>
     `;
 
     list.appendChild(row);
 }
 
+function removeAnswer(btn) {
+
+    const row =
+        btn.closest('.answer-row');
+
+    const list =
+        row.closest('.answer-list');
+
+    row.remove();
+
+    refreshLabels(list);
+}
+
 function refreshLabels(list) {
-    const rows = list.querySelectorAll('.answer-row');
+
+    const rows =
+        list.querySelectorAll('.answer-row');
 
     rows.forEach((row, i) => {
-        const label = String.fromCharCode(97 + i);
-        row.querySelector('span').innerText = label + ".";
+
+        const label =
+            String.fromCharCode(97 + i);
+
+        row.querySelector('.option-label')
+            .innerText = label + ".";
+
+        const hidden =
+            row.querySelector('input[type="hidden"]');
+
+        if(hidden){
+            hidden.value = label;
+        }
+
+        const textInput =
+            row.querySelector('input[type="text"]');
+
+        if(textInput){
+            textInput.placeholder =
+                `Pilihan ${label}`;
+        }
+
     });
 }
 
@@ -1022,17 +1163,40 @@ window.addEventListener('DOMContentLoaded', () => {
                 ).value = q.count || 1;
             }
 
-            // pilihan
-            if(q.type === 'pilihan'){
+            // pilihan + ranking
+            if(q.type === 'pilihan' || q.type === 'ranking'){
 
-                const answerList =
-                    currentQuestion.querySelector(
-                        '.answer-list'
-                    );
+                let answerList;
 
-                answerList.innerHTML = '';
+                // =========================
+                // RANKING
+                // =========================
+                if(q.type === 'ranking'){
 
-                q.options.forEach((opt, optIndex) => {
+                    answerList =
+                        currentQuestion.querySelector(
+                            '.ranking-option-list'
+                        );
+
+                    answerList.innerHTML = '';
+                }
+
+                // =========================
+                // PILIHAN
+                // =========================
+                else {
+
+                    answerList =
+                        currentQuestion.querySelector(
+                            '.answer-list'
+                        );
+
+                    answerList.innerHTML = '';
+                }
+
+                (q.options || [])
+                .filter(opt => opt.text && opt.text.trim() !== '')
+                .forEach((opt, optIndex) => {
 
                     const label =
                         opt.label || String.fromCharCode(97 + optIndex);
@@ -1040,30 +1204,66 @@ window.addEventListener('DOMContentLoaded', () => {
                     const row =
                         document.createElement('div');
 
-                    row.className = 'answer-row';
+                    row.className =
+                        q.type === 'ranking'
+                        ? 'answer-row ranking-option'
+                        : 'answer-row';
 
-                    row.innerHTML = `
-                        <span class="option-label">${label}.</span>
+                    if(q.type === 'ranking'){
 
-                        <input
-                            type="hidden"
-                            name="option_label[${currentQuestion.dataset.index}][]"
-                            value="${label}"
-                        >
+                        row.innerHTML = `
+                            <span class="rank-number">
+                                ${optIndex + 1}.
+                            </span>
 
-                        <input
-                            type="text"
-                            name="option_text[${currentQuestion.dataset.index}][]"
-                            value="${opt.text || ''}"
-                            placeholder="Pilihan ${label}"
-                        >
+                            <input
+                                type="hidden"
+                                name="option_label[${currentQuestion.dataset.index}][]"
+                                value="${label}"
+                            >
 
-                        <button
-                            type="button"
-                            onclick="addAnswer(this)">
-                            +
-                        </button>
-                    `;
+                            <input
+                                type="text"
+                                name="option_text[${currentQuestion.dataset.index}][]"
+                                value="${opt.text || ''}"
+                                placeholder="Opsi ranking ${optIndex + 1}"
+                            >
+
+                            <button
+                                type="button"
+                                class="btn-remove-option"
+                                onclick="removeRankingOption(this)"
+                            >
+                                ×
+                            </button>
+                        `;
+                    }
+
+                    else {
+
+                        row.innerHTML = `
+                            <span class="option-label">${label}.</span>
+
+                            <input
+                                type="hidden"
+                                name="option_label[${currentQuestion.dataset.index}][]"
+                                value="${label}"
+                            >
+
+                            <input
+                                type="text"
+                                name="option_text[${currentQuestion.dataset.index}][]"
+                                value="${opt.text || ''}"
+                                placeholder="Pilihan ${label}"
+                            >
+
+                            <button
+                                type="button"
+                                onclick="addAnswer(this)">
+                                +
+                            </button>
+                        `;
+                    }
 
                     answerList.appendChild(row);
 

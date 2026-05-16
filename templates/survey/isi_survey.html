@@ -48,6 +48,13 @@
 
     <form method="POST" action="/survey/{{ survey.id }}" class="survey-card">
 
+        <!-- PROGRESS BAR -->
+        <div class="progress-bar-bg">
+            <div id="progress-fill">
+                <span id="progress-text">0%</span>
+            </div>
+        </div>
+
         <input type="hidden" name="token" value="{{ token }}">
 
 
@@ -227,7 +234,10 @@
 
                         {% elif q.type == "pilihan" %}
 
-                        <div class="option-group">
+                        <div
+                            class="option-group"
+                            data-required="{{ 'true' if q.is_required else 'false' }}"
+                        >
 
                             {% if q.mode == "multiple" %}
 
@@ -278,6 +288,49 @@
                                 {% endfor %}
 
                             {% endif %}
+
+                        </div>
+
+                        {% elif q.type == "ranking" %}
+
+                        <div
+                            class="ranking-group ranking-click-group"
+                            data-required="{{ 'true' if q.is_required else 'false' }}"
+                        >
+
+                            {% for opt in q.options if opt.text and opt.text|trim %}
+
+                            <div
+                                class="ranking-click-item"
+                                data-rank=""
+                            >
+
+                                <div class="ranking-badge">
+                                    -
+                                </div>
+
+                                <div class="ranking-label">
+                                    {{ opt.text }}
+                                </div>
+
+                                <!-- hidden value -->
+                                <input
+                                    type="hidden"
+                                    name="q{{ q_index }}_rank_{{ loop.index0 }}"
+                                    class="ranking-hidden-input"
+                                    value=""
+                                >
+
+                                <!-- hidden text -->
+                                <input
+                                    type="hidden"
+                                    name="q{{ q_index }}_text_{{ loop.index0 }}"
+                                    value="{{ opt.text }}"
+                                >
+
+                            </div>
+
+                            {% endfor %}
 
                         </div>
 
@@ -364,11 +417,10 @@ let currentSession = unsurPage ? -1 : 0;
 
 function showSession(index) {
 
-    // SEMBUNYIKAN SEMUA PAGE
     allPages.forEach(p => p.classList.add('hidden'));
 
-    // JIKA ADA UNSUR DAN INDEX -1 → TAMPILKAN UNSUR
     if (unsurPage && index === -1) {
+        updateProgress();
         unsurPage.classList.remove('hidden');
         return;
     }
@@ -379,6 +431,8 @@ function showSession(index) {
     target.classList.remove('hidden');
 
     window.scrollTo({ top: 0, behavior: 'auto' });
+
+    updateProgress(); // 🔥
 }
 
 const unsurPageExists = document.getElementById("unsur-page");
@@ -472,7 +526,6 @@ function nextSession() {
             }
         }
 
-        // POPUP JIKA ADA ERROR
         if (error) {
             showPopup(messages.join("\n"));
             return;
@@ -528,7 +581,11 @@ document.querySelector("form").addEventListener("submit", function (e) {
 
     const requiredGroups =
         document.querySelectorAll(
-            '.session-page[data-session-index] .input-group[data-required="true"]'
+            `
+            .session-page[data-session-index] .input-group[data-required="true"],
+            .session-page[data-session-index] .ranking-group[data-required="true"],
+            .session-page[data-session-index] .option-group[data-required="true"]
+            `
         );
 
     let firstErrorGroup = null;
@@ -577,6 +634,111 @@ document.querySelector("form").addEventListener("submit", function (e) {
             });
 
             errorList.appendChild(li);
+        }
+
+        // RANKING
+        const rankingInputs =
+            group.querySelectorAll('.ranking-hidden-input');
+
+        if (rankingInputs.length > 0) {
+
+            let empty = false;
+
+            rankingInputs.forEach(input => {
+
+                if (!input.value) {
+                    empty = true;
+                }
+
+            });
+
+            if (empty && !firstErrorGroup) {
+                firstErrorGroup = group;
+            }
+
+            if (empty) {
+
+                const card =
+                    group.closest(".question-card");
+
+                const number =
+                    card.querySelector(".question-number")?.innerText ?? "?";
+
+                const text =
+                    card.querySelector(".question-text")?.innerText ?? "Pertanyaan";
+
+                const li =
+                    document.createElement("li");
+
+                li.innerHTML = `
+                    <span class="error-number">${number}</span>
+                    <span class="error-text">${text}</span>
+                `;
+
+                li.addEventListener("click", () => {
+
+                    card.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                });
+
+                errorList.appendChild(li);
+            }
+
+            return;
+        }
+
+        // PILIHAN (RADIO / CHECKBOX)
+        const options =
+            group.querySelectorAll(
+                'input[type="radio"], input[type="checkbox"]'
+            );
+
+        if (options.length > 0) {
+
+            const checked =
+                group.querySelector(
+                    'input[type="radio"]:checked, input[type="checkbox"]:checked'
+                );
+
+            if (!checked) {
+
+                if (!firstErrorGroup) {
+                    firstErrorGroup = group;
+                }
+
+                const card =
+                    group.closest(".question-card");
+
+                const number =
+                    card.querySelector(".question-number")?.innerText ?? "?";
+
+                const text =
+                    card.querySelector(".question-text")?.innerText ?? "Pertanyaan";
+
+                const li =
+                    document.createElement("li");
+
+                li.innerHTML = `
+                    <span class="error-number">${number}</span>
+                    <span class="error-text">${text}</span>
+                `;
+
+                li.addEventListener("click", () => {
+
+                    card.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                });
+
+                errorList.appendChild(li);
+            }
+
+            return;
         }
     });
 
@@ -697,6 +859,243 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+function updateProgress() {
+
+    const progressFill =
+        document.getElementById("progress-fill");
+    const progressText =
+        document.getElementById("progress-text");
+
+    if (!progressFill || !progressText) return;
+
+    // =========================
+    // AMBIL SEMUA PERTANYAAN
+    // =========================
+    const questionCards =
+        document.querySelectorAll(
+            '.session-page[data-session-index] .question-card'
+        );
+
+    let totalQuestions = 0;
+    let answeredQuestions = 0;
+
+    questionCards.forEach(card => {
+
+        totalQuestions++;
+
+        // TEXT INPUT
+        const textInputs =
+            card.querySelectorAll('.isian-input');
+
+        if (textInputs.length > 0) {
+            let filled = true;
+            textInputs.forEach(i => {
+                if (!i.value.trim()) filled = false;
+            });
+            if (filled) answeredQuestions++;
+            return;
+        }
+
+        // RANKING
+        const rankingInputs =
+            card.querySelectorAll('.ranking-hidden-input');
+
+        if (rankingInputs.length > 0) {
+
+            let filled = true;
+
+            rankingInputs.forEach(input => {
+
+                if (!input.value) {
+                    filled = false;
+                }
+
+            });
+
+            if (filled) {
+                answeredQuestions++;
+            }
+
+            return;
+        }
+
+        // RADIO
+        const radios =
+            card.querySelectorAll('input[type="radio"]');
+
+        if (radios.length > 0) {
+            const checked =
+                card.querySelector('input[type="radio"]:checked');
+            if (checked) answeredQuestions++;
+            return;
+        }
+
+        // CHECKBOX
+        const checkboxes =
+            card.querySelectorAll('input[type="checkbox"]');
+
+        if (checkboxes.length > 0) {
+            const checked =
+                card.querySelector('input[type="checkbox"]:checked');
+            if (checked) answeredQuestions++;
+        }
+
+    });
+
+    // =========================
+    // HITUNG PERSENTASE
+    // =========================
+    const percent =
+        totalQuestions === 0
+            ? 0
+            : Math.round(
+                (answeredQuestions / totalQuestions) * 100
+              );
+
+    const fill = document.getElementById("progress-fill");
+    fill.classList.add("animating");
+
+    setTimeout(() => {
+        fill.classList.remove("animating");
+    }, 400);
+
+    // =========================
+    // UPDATE UI
+    // =========================
+    progressFill.style.width = percent + "%";
+    progressText.innerText = percent + "%";
+
+    const meta = document.getElementById("progress-meta");
+    if (meta) {
+        meta.innerText =
+            `${answeredQuestions} dari ${totalQuestions} pertanyaan terjawab`;
+    }
+
+    const cardBg = document.getElementById("card-progress-bg");
+    if (cardBg) {
+        cardBg.style.width = percent + "%";
+    }
+}
+
+document.addEventListener("input", () => {
+    updateProgress();
+});
+
+document.addEventListener("change", () => {
+    updateProgress();
+});
+
+// =========================
+// CLICK RANKING SYSTEM
+// =========================
+
+document.addEventListener("click", (e) => {
+
+    const item = e.target.closest(".ranking-click-item");
+
+    if (!item) return;
+
+    const group =
+        item.closest(".ranking-click-group");
+
+    const allItems =
+        [...group.querySelectorAll(".ranking-click-item")];
+
+    const hiddenInput =
+        item.querySelector(".ranking-hidden-input");
+
+    const badge =
+        item.querySelector(".ranking-badge");
+
+    // =========================
+    // JIKA SUDAH DIPILIH -> CANCEL
+    // =========================
+    if (hiddenInput.value) {
+
+        const removedRank =
+            parseInt(hiddenInput.value);
+
+        // reset item ini
+        hiddenInput.value = "";
+        badge.innerText = "-";
+
+        item.classList.remove("selected");
+
+        // turunkan ranking setelahnya
+        allItems.forEach(otherItem => {
+
+            const otherInput =
+                otherItem.querySelector(".ranking-hidden-input");
+
+            const otherBadge =
+                otherItem.querySelector(".ranking-badge");
+
+            const rank =
+                parseInt(otherInput.value);
+
+            if (rank > removedRank) {
+
+                otherInput.value = rank - 1;
+                otherBadge.innerText = rank - 1;
+
+            }
+
+        });
+
+        updateProgress();
+        return;
+    }
+
+    // =========================
+    // CARI RANK TERAKHIR
+    // =========================
+    let maxRank = 0;
+
+    allItems.forEach(otherItem => {
+
+        const value =
+            parseInt(
+                otherItem.querySelector(".ranking-hidden-input").value
+            );
+
+        if (value > maxRank) {
+            maxRank = value;
+        }
+
+    });
+
+    // =========================
+    // SET RANK BARU
+    // =========================
+    const newRank = maxRank + 1;
+
+    hiddenInput.value = newRank;
+
+    badge.innerText = newRank;
+
+    item.classList.add("selected");
+
+    item.animate(
+        [
+            {
+                transform: "scale(0.98)"
+            },
+            {
+                transform: "scale(1.02)"
+            },
+            {
+                transform: "scale(1)"
+            }
+        ],
+        {
+            duration: 220,
+            easing: "ease"
+        }
+    );
+
+    updateProgress();
+
+});
 
 // =========================
 // INIT

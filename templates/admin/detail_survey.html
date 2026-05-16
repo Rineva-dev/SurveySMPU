@@ -233,6 +233,55 @@
 
                                     </ul>
 
+                                {% elif q.type == 'ranking' %}
+
+                                    {% set ranking_items = namespace(items=[]) %}
+
+                                    {% for i in range(q.options|length) %}
+
+                                        {% set rank_key = answer_key ~ '_rank_' ~ i %}
+                                        {% set text_key = answer_key ~ '_text_' ~ i %}
+
+                                        {% set rank_value = r.answers_json.get(rank_key) %}
+                                        {% set text_value = r.answers_json.get(text_key) %}
+
+                                        {% if rank_value and text_value %}
+
+                                            {% set _ = ranking_items.items.append({
+                                                'rank': rank_value|int,
+                                                'text': text_value
+                                            }) %}
+
+                                        {% endif %}
+
+                                    {% endfor %}
+
+                                    {% set sorted_ranking =
+                                        ranking_items.items
+                                        | sort(attribute='rank')
+                                    %}
+
+                                    {% if sorted_ranking %}
+
+                                        <ul style="margin:0;padding-left:18px;">
+
+                                            {% for item in sorted_ranking %}
+
+                                                <li>
+                                                    Ranking {{ item.rank }} :
+                                                    {{ item.text }}
+                                                </li>
+
+                                            {% endfor %}
+
+                                        </ul>
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
                                 {% else %}
 
                                     {% set answer = r.answers_json.get(answer_key) %}
@@ -250,7 +299,7 @@
                                                 %}
 
                                                 <li>
-                                                    {{ item }}. 
+                                                    {{ item }}.
 
                                                     {% if selected_option %}
                                                         {{ selected_option.text }}
@@ -274,7 +323,7 @@
                                             %}
 
                                             {% if selected_option %}
-                                                {{ answer }}. 
+                                                {{ answer }}.
                                                 {{ selected_option.text }}
                                             {% else %}
                                                 {{ answer or '-' }}
