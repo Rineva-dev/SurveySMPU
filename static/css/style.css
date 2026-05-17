@@ -297,7 +297,7 @@ input, textarea {
     box-shadow:
         0 10px 40px rgba(15,23,42,.08);
     z-index:50;
-    overflow:hidden;
+    overflow:visible;
 }
 
 /* ambient glow */
@@ -488,6 +488,7 @@ input, textarea {
     display:flex;
     align-items:center;
     gap:14px;
+
 }
 
 .admin-profile img{
@@ -495,11 +496,7 @@ input, textarea {
     height:44px;
     border-radius:14px;
     object-fit:cover;
-    border:2px solid rgba(255,255,255,.8);
-    box-shadow:
-        0 8px 20px rgba(15, 23, 42, 0.058),
-        0 0 0 4px rgba(255, 201, 75, 0.07);
-
+    border: 1px solid rgba(226,232,240,.9);
     cursor:pointer;
     transition:.25s ease;
 }
@@ -594,13 +591,13 @@ input, textarea {
     padding: 28px 36px;
     border-radius: 14px;
 
-    display: flex;              /* 🔥 */
-    flex-direction: column;     /* 🔥 */
-    align-items: center;        /* 🔥 RATA TENGAH HORIZONTAL */
-    justify-content: center;    /* 🔥 RATA TENGAH VERTIKAL */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
-    text-align: center;         /* 🔥 Teks tengah */
-    gap: 14px;                  /* Jarak spinner & teks */
+    text-align: center;
+    gap: 14px;
 
     box-shadow: 0 20px 40px rgba(0,0,0,0.12);
     animation: fadeIn 0.3s ease;
@@ -713,47 +710,240 @@ input, textarea {
   to { transform: scale(1); opacity: 1; }
 }
 
+.empty-chart {
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.notification-wrapper{
+    position: relative;
+}
+
+.notif-badge{
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff968a;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-dropdown {
+    position: absolute;
+    right: 0;
+    top: 55px;
+    width: 320px;
+
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+
+    overflow: hidden; /* PENTING */
+    z-index: 9999;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#notifList {
+    max-height: 320px;   /* BATAS TINGGI */
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.clear-all-btn {
+    background: transparent;
+    border: none;
+    color: #ff968a;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.clear-all-btn:hover {
+    text-decoration: underline;
+}
+
+.notif-item{
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.notif-item.unread{
+    background: #f5f9ff;
+}
+
+.notif-body {
+    margin-bottom: 6px;
+}
+
+.notif-message{
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.notif-time{
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.notif-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* SCROLLBAR HALUS */
+#notifList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#notifList::-webkit-scrollbar-thumb {
+    background: #c7d2fe;
+    border-radius: 6px;
+}
+
+#notifList::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.notif-empty{
+    padding: 20px;
+    text-align: center;
+    color: #888;
+}
+
+.hidden{
+    display: none;
+}
+
+.notif-item {
+    position: relative;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.notif-delete {
+    background: none;
+    border: none;
+    color: rgb(255, 142, 142);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.notif-delete:hover {
+    text-decoration: underline;
+}
+
+.notif-delete:hover {
+    opacity: 1;
+    color:  rgb(255, 142, 142);
+}
+
+.notif-item.unread {
+    background: #f0f7ff;
+    border-left: 4px solid #f6ab3b;
+}
+
+.notif-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.notif-link {
+    color: #111827;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.notif-link:hover {
+    text-decoration: underline;
+}
+
+
+
 /* ======================================
     MOBILE
 ====================================== */
 @media(max-width:768px){
-    /* sidebar hidden */
+
+
+    /* ================= SIDEBAR ================= */
     .sidebar{
         transform:translateX(-100%);
         transition:.3s ease;
         width:220px;
         padding-bottom: env(safe-area-inset-bottom);
+        border-radius: 0 18px 18px 0;
     }
 
-    /* sidebar show */
     .sidebar.show{
         transform:translateX(0);
     }
 
-    /* hamburger muncul */
+    .sidebar-header img{
+        width: 80px;
+    }
+
+    .menu-item{
+        padding: 12px 14px;
+        font-size: 13px;
+        border-radius: 14px;
+    }
+
     .mobile-menu-btn{
         display:flex;
     }
 
-    /* content full */
+    /* ================= CONTENT ================= */
+
     .content{
+        padding: 82px 14px 20px;
         margin-left:0;
-        padding:
-            85px
-            18px
-            20px;
         min-height:100dvh;
     }
 
-    /* header full */
+    /* ================= HEADER ================= */
     .admin-header{
         left:12px;
         right:12px;
         top:10px;
+        height: 64px;
+        padding: 0 14px;
+        border-radius: 14px;
     }
 
     .admin-main-title{
-        font-size:17px;
+        font-size: 16px;
+        line-height: 1.2;
     }
 
     .admin-sub-title{
@@ -765,18 +955,75 @@ input, textarea {
         display:none;
     }
 
+    /* ================= RIGHT ACTION ================= */
     .header-right{
-        gap:8px;
+        gap:6px;
     }
 
     .header-action-btn{
-        width:40px;
-        height:40px;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+    }
+
+    .header-action-btn i{
+        width: 18px;
+        height: 18px;
     }
 
     .admin-profile img{
-        width:40px;
-        height:40px;
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+    }
+
+    /* ================= NOTIF DROPDOWN ================= */
+
+    .notif-dropdown{
+        position: fixed; /* 🔥 supaya tidak kepotong */
+        top: 60px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-height: calc(100dvh - 100px);
+        border-radius: 8px;
+        animation: slideUp .2s ease;
+    }
+
+    @keyframes slideUp{
+        from{
+            transform: translateY(8px);
+            opacity: 0;
+        }
+        to{
+            transform: none;
+            opacity: 1;
+        }
+    }
+
+    #notifList{
+        max-height: calc(100dvh - 160px);
+    }
+
+    .notif-item{
+        padding: 12px 14px;
+    }
+
+    .notif-message{
+        font-size: 13px;
+    }
+
+    .notif-footer{
+        font-size: 11px;
+    }
+
+    /* ================= BADGE ================= */
+    .notif-badge{
+        width: 16px;
+        height: 16px;
+        font-size: 10px;
+        top: -4px;
+        right: -4px;
     }
 
 }

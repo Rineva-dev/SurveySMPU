@@ -1,4 +1,4 @@
-from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file, jsonify
+from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file, jsonify, current_app
 from datetime import datetime
 from markupsafe import Markup
 import json, os
@@ -8,6 +8,9 @@ from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 from dotenv import load_dotenv
 from collections import Counter
+from flask import Response
+import time
+import json
 
 load_dotenv()
 
@@ -18,6 +21,21 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.jinja_env.globals.update(format_date=format_date)
+@app.context_processor
+def inject_notifications():
+
+    notifications = Notification.query.order_by(
+        Notification.id.desc()
+    ).limit(10).all()
+
+    unread_count = Notification.query.filter_by(
+        is_read=False
+    ).count()
+
+    return dict(
+        notifications=notifications,
+        unread_count=unread_count
+    )
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -32,6 +50,18 @@ db = SQLAlchemy(app)
 
 from flask_migrate import Migrate
 migrate = Migrate(app, db)
+
+def create_notification(message, notif_type="info", target_url=None):
+
+    notif = Notification(
+        message=message,
+        type=notif_type,
+        target_url=target_url,
+        created_at=datetime.now().strftime("%Y-%m-%d %H:%M")
+    )
+
+    db.session.add(notif)
+    db.session.commit()
 
 class Survey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -110,6 +140,17 @@ class SurveyResponse(db.Model):
     def answers_json(self):
         return json.loads(self.answers or "{}")
     
+class Notification(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.String(255))
+    type = db.Column(db.String(50))
+
+    target_url = db.Column(db.String(255)) 
+
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.String(30))
+
 # -----------------------------
 # LOGIN ADMIN
 # -----------------------------
@@ -245,6 +286,56 @@ def dashboard_chart_data(survey_id, q_index):
         "values": values
     })
 
+@app.route("/admin/notifications/read", methods=["POST"])
+def mark_all_notifications_read():
+    if not session.get("admin"):
+        return jsonify({"success": False})
+
+    Notification.query.filter_by(is_read=False).update({
+        "is_read": True
+    })
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route("/admin/notif-stream")
+def notif_stream():
+
+    def event_stream():
+        with app.app_context():  # 🔥 INI KUNCI UTAMA
+            last_id = db.session.query(
+                db.func.max(Notification.id)
+            ).scalar() or 0
+
+        while True:
+            with app.app_context():  # 🔥 SETIAP LOOP
+                notif = Notification.query.filter(
+                    Notification.id > last_id,
+                    Notification.is_read == False
+                ).order_by(Notification.id.asc()).first()
+
+                if notif:
+                    last_id = notif.id
+
+                    data = {
+                        "id": notif.id,
+                        "message": notif.message,
+                        "time": notif.created_at,
+                        "target_url": notif.target_url
+                    }
+
+                    yield f"data: {json.dumps(data)}\n\n"
+
+            time.sleep(1)
+
+    return Response(
+        event_stream(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
 @app.route("/survey")
 def admin_survey():
     if not session.get("admin"):
@@ -257,6 +348,66 @@ def admin_survey():
         surveys=surveys,
         active_page="survey"
     )
+
+@app.route("/admin/notifikasi")
+def get_notifications():
+    notifs = Notification.query.order_by(
+        Notification.id.desc()
+    ).limit(10).all()
+
+    return jsonify([
+        {
+            "id": n.id,
+            "message": n.message,
+            "type": n.type,
+            "time": n.created_at,
+            "is_read": n.is_read,
+            "target_url": n.target_url
+        }
+        for n in notifs
+    ])
+
+@app.route("/admin/notifications/clear", methods=["POST"])
+def clear_notifications():
+    if not session.get("admin"):
+        return jsonify({"success": False})
+
+    Notification.query.delete()
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+@app.route("/admin/notifications/delete/<int:notif_id>", methods=["POST"])
+def delete_notification(notif_id):
+    if not session.get("admin"):
+        return jsonify({"success": False})
+
+    notif = Notification.query.get(notif_id)
+
+    if notif:
+        db.session.delete(notif)
+        db.session.commit()
+
+    return jsonify({"success": True})
+
+@app.route("/admin/notification/<int:notif_id>")
+def open_notification(notif_id):
+
+    if not session.get("admin"):
+        return redirect(url_for("admin_login"))
+
+    notif = Notification.query.get_or_404(notif_id)
+
+    # tandai dibaca
+    if not notif.is_read:
+        notif.is_read = True
+        db.session.commit()
+
+    # redirect ke tujuan
+    if notif.target_url:
+        return redirect(notif.target_url)
+
+    return redirect(url_for("admin_dashboard"))
 
 @app.route("/admin/survey/tambah", methods=["GET", "POST"])
 def admin_survey_tambah():
@@ -576,6 +727,8 @@ def detail_survey(survey_id):
 
     if not session.get("admin"):
         return redirect(url_for("admin_login"))
+    
+    response_id = request.args.get("response_id", type=int)
 
     survey = Survey.query.get_or_404(survey_id)
 
@@ -589,11 +742,16 @@ def detail_survey(survey_id):
         survey.questions or "[]"
     )
 
+    selected_response = None
+    if response_id:
+        selected_response = SurveyResponse.query.get(response_id)
+
     return render_template(
         "admin/detail_survey.html",
         survey=survey,
         responses=responses,
-        parsed_questions=parsed_questions
+        parsed_questions=parsed_questions,
+        selected_response=selected_response
     )
 
 
@@ -788,6 +946,11 @@ def survey_responden(survey_id):
         db.session.add(response)
         db.session.commit()
 
+        create_notification(
+            f"Responden baru mengisi survey '{survey.title}'",
+            "response",
+            target_url=url_for("detail_survey", survey_id=survey.id, response_id=response.id)
+        )
         session.pop(f"survey_{survey_id}_token", None)
 
         return render_template("survey/thank_you.html")
@@ -825,7 +988,7 @@ def survey_responden(survey_id):
             counter += 1
 
     # 🔥 PARSE UNSUR
-    survey.unsur_responden = json.loads(
+    unsur_responden = json.loads(
         survey.unsur_responden or '["Semua"]'
     )
 
@@ -833,6 +996,7 @@ def survey_responden(survey_id):
         "survey/isi_survey.html",
         survey=survey,
         sessions=sessions,
+        unsur_responden=unsur_responden,
         token=request.args.get("token"),
         skip_intro=skip_intro
     )

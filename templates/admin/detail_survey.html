@@ -149,6 +149,8 @@
         <div
             class="response-preview {% if not loop.first %}hidden{% endif %}"
             data-response="{{ loop.index0 }}"
+            data-response-id="{{ r.id }}"
+            id="response-{{ r.id }}"
         >
 
             <!-- HEADER RESPONDEN -->
@@ -381,8 +383,10 @@ function showResponse(index){
 
         if(i === index){
             item.classList.remove('hidden');
+            item.classList.add('active');
         } else {
             item.classList.add('hidden');
+            item.classList.remove('active');
         }
 
     });
@@ -390,29 +394,54 @@ function showResponse(index){
     counter.innerText = index + 1;
 }
 
+/* =========================
+    NAVIGATION
+========================= */
 function nextResponse(){
-
     if(currentResponse < responses.length - 1){
-
         currentResponse++;
-
         showResponse(currentResponse);
-
     }
-
 }
 
 function prevResponse(){
-
     if(currentResponse > 0){
-
         currentResponse--;
-
         showResponse(currentResponse);
+    }
+}
 
+/* =========================
+    AUTO OPEN FROM NOTIFICATION
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+    const params = new URLSearchParams(window.location.search);
+    const targetId = params.get("response_id");
+
+    if (targetId) {
+
+        responses.forEach((item, index) => {
+
+            if (item.dataset.responseId === targetId) {
+
+                currentResponse = index;
+                showResponse(index);
+
+                item.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            }
+
+        });
+
+    } else {
+        showResponse(0);
     }
 
-}
+});
 
 </script>
 

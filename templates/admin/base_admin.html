@@ -95,9 +95,37 @@
         </div>
 
         <!-- NOTIFICATION -->
-        <button class="header-action-btn">
-            <i data-lucide="bell"></i>
-        </button>
+        <div class="notification-wrapper">
+
+            <button class="header-action-btn" id="notifBtn">
+
+                <i data-lucide="bell"></i>
+
+                {% if unread_count > 0 %}
+                <span class="notif-badge">
+                    {{ unread_count }}
+                </span>
+                {% endif %}
+
+            </button>
+
+            <div class="notif-dropdown hidden" id="notifDropdown">
+
+                <div class="notif-header">
+                    <span class="notif-title">Notifikasi</span>
+
+                    <button id="clearAllNotif" class="clear-all-btn">
+                        Clear All
+                    </button>
+                </div>
+
+                <div id="notifList">
+                    <div class="notif-empty">Memuat notifikasi...</div>
+                </div>
+
+            </div>
+
+        </div>
 
         <!-- PROFILE -->
         <div class="admin-profile">
@@ -144,6 +172,7 @@
 </div>
 
 <script>
+console.log("NOTIF SCRIPT LOADED");
 const loading = document.getElementById("globalLoading");
 
 document.querySelectorAll("form").forEach(form => {
@@ -212,6 +241,235 @@ window.addEventListener("pageshow", function (event) {
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
         hideLoading();
+    }
+});
+
+const notifBtn = document.getElementById("notifBtn");
+const notifDropdown = document.getElementById("notifDropdown");
+
+if (notifBtn && notifDropdown) {
+    notifBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+
+        notifDropdown.classList.toggle("hidden");
+
+        if (!notifDropdown.classList.contains("hidden")) {
+            await loadNotifications();
+
+            await fetch("/admin/notifications/read", {
+                method: "POST"
+            });
+
+            const badge = document.querySelector(".notif-badge");
+            if (badge) badge.remove();
+
+            // hapus status unread di UI
+            document.querySelectorAll(".notif-item.unread")
+                .forEach(el => el.classList.remove("unread"));
+        }
+    });
+}
+
+document.addEventListener("click", () => {
+    notifDropdown.classList.add("hidden");
+});
+
+notifDropdown.addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+
+const evtSource = new EventSource("/admin/notif-stream");
+const seen = new Set();
+
+evtSource.onmessage = function (event) {
+    const n = JSON.parse(event.data);
+
+    if (seen.has(n.id)) return;
+    seen.add(n.id);
+
+    const list = document.getElementById("notifList");
+
+    const empty = list.querySelector(".notif-empty");
+    if (empty) empty.remove();
+
+    const item = document.createElement("div");
+    item.className = "notif-item unread";
+
+    item.innerHTML = `
+        <div class="notif-body">
+            <a href="${n.target_url || '#'}"
+               class="notif-message notif-link no-loading"
+               data-id="${n.id}">
+               ${n.message}
+            </a>
+        </div>
+        <div class="notif-footer">
+            <div class="notif-time">${n.time}</div>
+            <button class="notif-delete" data-id="${n.id}">
+                Delete
+            </button>
+        </div>
+    `;
+
+    list.prepend(item);
+
+    if (!notifDropdown.classList.contains("hidden")) return;
+
+    let badge = document.querySelector(".notif-badge");
+    if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "notif-badge";
+        badge.innerText = "1";
+        notifBtn.appendChild(badge);
+    } else {
+        badge.innerText = parseInt(badge.innerText) + 1;
+    }
+};
+
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".notif-delete");
+    if (!btn) return;
+
+    console.log("DELETE CLICKED:", btn.dataset.id);
+});
+
+const clearBtn = document.getElementById("clearAllNotif");
+
+clearBtn.addEventListener("click", () => {
+
+    showModal({
+        title: "Hapus Notifikasi",
+        message: "Yakin ingin menghapus semua notifikasi?",
+        
+        onOk: async () => {
+
+            const res = await fetch("/admin/notifications/clear", {
+                method: "POST"
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                const list = document.getElementById("notifList");
+
+                list.innerHTML = `
+                    <div class="notif-empty">
+                        Tidak ada notifikasi
+                    </div>
+                `;
+
+                const badge = document.querySelector(".notif-badge");
+                if (badge) badge.remove();
+            }
+        },
+
+        onCancel: () => {
+            
+        }
+    });
+
+});
+
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.notif-delete");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log("DELETE CLICKED:", btn.dataset.id);
+
+    const id = btn.dataset.id;
+
+    showModal({
+        title: "Hapus Notifikasi",
+        message: "Yakin ingin menghapus notifikasi ini?",
+
+        onOk: async () => {
+            const res = await fetch(`/admin/notifications/delete/${id}`, {
+                method: "POST"
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // aman dari race condition setInterval
+                const item = btn.closest(".notif-item");
+                if (item) item.remove();
+
+                // update badge
+                const badge = document.querySelector(".notif-badge");
+                const count = document.querySelectorAll(".notif-item.unread").length;
+
+                if (badge) {
+                    if (count > 0) {
+                        badge.innerText = count;
+                    } else {
+                        badge.remove();
+                    }
+                }
+            }
+        }
+    });
+});
+
+async function loadNotifications() {
+    const list = document.getElementById("notifList");
+    list.innerHTML = `<div class="notif-empty">Memuat...</div>`;
+
+    const res = await fetch("/admin/notifikasi");
+    const data = await res.json();
+
+    if (data.length === 0) {
+        list.innerHTML = `<div class="notif-empty">Tidak ada notifikasi</div>`;
+        return;
+    }
+
+    list.innerHTML = "";
+
+    data.forEach(n => {
+        const item = document.createElement("div");
+        item.className = `notif-item ${n.is_read ? "" : "unread"}`;
+
+        item.innerHTML = `
+            <div class="notif-body">
+                <a href="${n.target_url || '#'}"
+                    class="notif-message notif-link no-loading"
+                    data-id="${n.id}">
+                    ${n.message}
+                </a>
+            </div>
+            <div class="notif-footer">
+                <div class="notif-time">${n.time}</div>
+                <button class="notif-delete" data-id="${n.id}">Delete</button>
+            </div>
+        `;
+
+        list.appendChild(item);
+    });
+};
+
+document.addEventListener("click", async (e) => {
+    const link = e.target.closest(".notif-link");
+    if (!link) return;
+
+    const id = link.dataset.id;
+    if (!id) return;
+
+    e.preventDefault();
+
+    // tandai notif ini sudah dibaca
+    await fetch(`/admin/notification/${id}`);
+
+    // redirect manual
+    window.location.href = link.href;
+});
+
+window.addEventListener("scroll", () => {
+    if (window.innerWidth <= 768) {
+        const dropdown = document.getElementById("notifDropdown");
+        dropdown && dropdown.classList.add("hidden");
     }
 });
 
