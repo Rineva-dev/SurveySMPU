@@ -21,21 +21,36 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.jinja_env.globals.update(format_date=format_date)
+
+@app.context_processor
 @app.context_processor
 def inject_notifications():
 
-    notifications = Notification.query.order_by(
-        Notification.id.desc()
-    ).limit(10).all()
+    # default aman
+    context = {
+        "notifications": [],
+        "unread_count": 0
+    }
 
-    unread_count = Notification.query.filter_by(
-        is_read=False
-    ).count()
+    if not request.path.startswith("/admin"):
+        return context
 
-    return dict(
-        notifications=notifications,
-        unread_count=unread_count
-    )
+    if request.path == "/admin/notif-stream":
+        return context
+
+    notifications = Notification.query \
+        .order_by(Notification.id.desc()) \
+        .limit(10) \
+        .all()
+
+    unread_count = Notification.query \
+        .filter_by(is_read=False) \
+        .count()
+
+    context["notifications"] = notifications
+    context["unread_count"] = unread_count
+
+    return context
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -301,13 +316,12 @@ def mark_all_notifications_read():
 def notif_stream():
 
     def event_stream():
-        with app.app_context():  # 🔥 INI KUNCI UTAMA
+        with app.app_context():
             last_id = db.session.query(
                 db.func.max(Notification.id)
             ).scalar() or 0
 
-        while True:
-            with app.app_context():  # 🔥 SETIAP LOOP
+            while True:
                 notif = Notification.query.filter(
                     Notification.id > last_id,
                     Notification.is_read == False
@@ -325,7 +339,7 @@ def notif_stream():
 
                     yield f"data: {json.dumps(data)}\n\n"
 
-            time.sleep(1)
+                time.sleep(3)  # 🔥 lebih ramah Railway
 
     return Response(
         event_stream(),
