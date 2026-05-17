@@ -168,6 +168,7 @@
 </div>
 
 <script>
+let lastNotifCount = 0;
 console.log("NOTIF SCRIPT LOADED");
 const loading = document.getElementById("globalLoading");
 
@@ -197,6 +198,7 @@ document.querySelectorAll("a").forEach(link => {
 });
 
 function showModal({ title, message, onOk, onCancel }) {
+
     const modal = document.getElementById("customModal");
     const modalTitle = document.getElementById("modalTitle");
     const modalMessage = document.getElementById("modalMessage");
@@ -208,16 +210,35 @@ function showModal({ title, message, onOk, onCancel }) {
 
     modal.classList.remove("hidden");
 
-    btnOk.onclick = () => {
+    btnOk.onclick = (e) => {
+
+        e.stopPropagation();
+
         modal.classList.add("hidden");
+
         onOk && onOk();
     };
 
-    btnCancel.onclick = () => {
+    btnCancel.onclick = (e) => {
+
+        e.stopPropagation();
+
         modal.classList.add("hidden");
+
         onCancel && onCancel();
     };
 }
+
+const customModal = document.getElementById("customModal");
+
+customModal.addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+
+document.querySelector(".modal-box")
+    .addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
 
 function hideLoading() {
     const loading = document.getElementById("globalLoading");
@@ -243,7 +264,12 @@ async function refreshNotifBadge() {
 
         const badge = document.querySelector(".notif-badge");
 
-        if (!badge) return;
+        if (!badge) return false;
+
+        // cek apakah count berubah
+        const changed = data.count !== lastNotifCount;
+
+        lastNotifCount = data.count;
 
         if (data.count > 0) {
 
@@ -255,9 +281,12 @@ async function refreshNotifBadge() {
             badge.classList.add("hidden");
         }
 
+        return changed;
+
     } catch (err) {
 
         console.log("notif refresh gagal");
+        return false;
     }
 }
 
@@ -278,7 +307,10 @@ if (notifBtn && notifDropdown) {
             });
 
             const badge = document.querySelector(".notif-badge");
-            if (badge) badge.remove();
+            if (badge) {
+                badge.innerText = "0";
+                badge.classList.add("hidden");
+            }
 
             // hapus status unread di UI
             document.querySelectorAll(".notif-item.unread")
@@ -287,20 +319,18 @@ if (notifBtn && notifDropdown) {
     });
 }
 
-document.addEventListener("click", () => {
+document.addEventListener("click", (e) => {
+
+    // jangan tutup kalau klik modal
+    if (e.target.closest(".modal-box")) {
+        return;
+    }
+
     notifDropdown.classList.add("hidden");
 });
 
 notifDropdown.addEventListener("click", (e) => {
     e.stopPropagation();
-});
-
-
-document.addEventListener("click", (e) => {
-    const btn = e.target.closest(".notif-delete");
-    if (!btn) return;
-
-    console.log("DELETE CLICKED:", btn.dataset.id);
 });
 
 const clearBtn = document.getElementById("clearAllNotif");
@@ -341,66 +371,121 @@ clearBtn.addEventListener("click", () => {
 
 });
 
-document.addEventListener("click", (e) => {
-    const btn = e.target.closest("button.notif-delete");
-    if (!btn) return;
+document.addEventListener("click", async function (e) {
+
+    const deleteBtn = e.target.closest(".notif-delete");
+
+    if (!deleteBtn) return;
 
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
 
-    console.log("DELETE CLICKED:", btn.dataset.id);
-
-    const id = btn.dataset.id;
+    const id = deleteBtn.dataset.id;
 
     showModal({
         title: "Hapus Notifikasi",
-        message: "Yakin ingin menghapus notifikasi ini?",
+        message: "Apakah Anda yakin ingin menghapus notifikasi ini?",
 
         onOk: async () => {
-            const res = await fetch(`/admin/notifications/delete/${id}`, {
-                method: "POST"
-            });
 
-            const data = await res.json();
+            try {
 
-            if (data.success) {
-                // aman dari race condition setInterval
-                const item = btn.closest(".notif-item");
-                if (item) item.remove();
-
-                // update badge
-                const badge = document.querySelector(".notif-badge");
-                const count = document.querySelectorAll(".notif-item.unread").length;
-
-                if (badge) {
-                    if (count > 0) {
-                        badge.innerText = count;
-                    } else {
-                        badge.remove();
+                const res = await fetch(
+                    `/admin/notifications/delete/${id}`,
+                    {
+                        method: "POST"
                     }
+                );
+
+                const data = await res.json();
+
+                if (!data.success) return;
+
+                const item = deleteBtn.closest(".notif-item");
+
+                if (item) {
+
+                    item.style.transition = "all .25s ease";
+                    item.style.opacity = "0";
+                    item.style.transform = "translateX(20px)";
+
+                    setTimeout(() => {
+
+                        item.remove();
+
+                        const totalItems =
+                            document.querySelectorAll(".notif-item").length;
+
+                        if (totalItems === 0) {
+
+                            document.getElementById("notifList").innerHTML = `
+                                <div class="notif-empty">
+                                    Tidak ada notifikasi
+                                </div>
+                            `;
+                        }
+
+                    }, 250);
                 }
+
+                await refreshNotifBadge();
+
+            } catch (err) {
+
+                console.log("Gagal menghapus notifikasi");
             }
         }
     });
-});
+}, true);
 
-async function loadNotifications() {
+async function loadNotifications(forceRender = false) {
+
     const list = document.getElementById("notifList");
-    list.innerHTML = `<div class="notif-empty">Memuat...</div>`;
 
     const res = await fetch("/admin/notifikasi");
     const data = await res.json();
 
+    // kosong
     if (data.length === 0) {
-        list.innerHTML = `<div class="notif-empty">Tidak ada notifikasi</div>`;
+
+        if (forceRender || list.children.length !== 1) {
+            list.innerHTML = `
+                <div class="notif-empty">
+                    Tidak ada notifikasi
+                </div>
+            `;
+        }
+
         return;
     }
 
-    list.innerHTML = "";
+    // =========================
+    // AMBIL ID TERBARU DI DOM
+    // =========================
 
-    data.forEach(n => {
+    const existingIds = Array.from(
+        document.querySelectorAll(".notif-item")
+    ).map(el => el.dataset.id);
+
+    // =========================
+    // TAMBAH HANYA NOTIF BARU
+    // =========================
+
+    data.reverse().forEach(n => {
+
+        if (existingIds.includes(String(n.id))) {
+            return;
+        }
+
         const item = document.createElement("div");
+
         item.className = `notif-item ${n.is_read ? "" : "unread"}`;
+        item.dataset.id = n.id;
+
+        item.style.opacity = "0";
+        item.style.transform = "translateY(-8px)";
+        item.style.transition = "all .25s ease";
 
         item.innerHTML = `
             <div class="notif-body">
@@ -410,16 +495,32 @@ async function loadNotifications() {
                     ${n.message}
                 </a>
             </div>
+
             <div class="notif-footer">
                 <div class="notif-time">${n.time}</div>
-                <button class="notif-delete" data-id="${n.id}">Delete</button>
+
+                <button
+                    class="notif-delete"
+                    data-id="${n.id}"
+                    onclick="event.stopPropagation()">
+                    Delete
+                </button>
             </div>
         `;
 
-        list.appendChild(item);
-    });
-};
+        // hapus empty state
+        const empty = list.querySelector(".notif-empty");
+        if (empty) empty.remove();
 
+        // prepend notif baru
+        list.prepend(item);
+
+        requestAnimationFrame(() => {
+            item.style.opacity = "1";
+            item.style.transform = "translateY(0)";
+        });
+    });
+}
 document.addEventListener("click", async (e) => {
     const link = e.target.closest(".notif-link");
     if (!link) return;
@@ -451,27 +552,37 @@ function startNotifPolling() {
 
     notifPolling = setInterval(async () => {
 
-        // stop kalau tab tidak aktif
         if (document.visibilityState !== "visible") {
             return;
         }
 
-        // refresh badge
-        await refreshNotifBadge();
+        // cek apakah count berubah
+        const changed = await refreshNotifBadge();
 
-        // reload notif hanya saat dropdown terbuka
-        if (!notifDropdown.classList.contains("hidden")) {
+        // reload notif HANYA jika berubah
+        // dan dropdown sedang terbuka
+        if (changed) {
+
+            // update list realtime
             await loadNotifications();
+
         }
 
-    }, 3000); // 3 detik
+
+    }, 3000);
 }
 
-// jalankan
 startNotifPolling();
 
 // refresh pertama saat page load
-refreshNotifBadge();
+(async () => {
+
+    await refreshNotifBadge();
+
+    // render notif awal
+    await loadNotifications(true);
+
+})();
 
 </script>
 </body>

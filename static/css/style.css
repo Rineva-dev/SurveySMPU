@@ -725,7 +725,7 @@ input, textarea {
     position: absolute;
     top: -5px;
     right: -5px;
-    background: #ff968a;
+    background: #e31700;
     color: white;
     width: 18px;
     height: 18px;
@@ -853,19 +853,15 @@ input, textarea {
 .notif-delete {
     background: none;
     border: none;
-    color: rgb(255, 142, 142);
+    color: rgb(156, 156, 156);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
 }
 
 .notif-delete:hover {
-    text-decoration: underline;
-}
-
-.notif-delete:hover {
     opacity: 1;
-    color:  rgb(255, 142, 142);
+    color:  rgb(102, 102, 102);
 }
 
 .notif-item.unread {
