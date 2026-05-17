@@ -841,7 +841,7 @@ input, textarea {
 }
 
 .hidden{
-    display: none;
+    display: none !important;
 }
 
 .notif-item {

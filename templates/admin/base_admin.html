@@ -101,11 +101,7 @@
 
                 <i data-lucide="bell"></i>
 
-                {% if unread_count > 0 %}
-                <span class="notif-badge">
-                    {{ unread_count }}
-                </span>
-                {% endif %}
+                <span class="notif-badge hidden"></span>
 
             </button>
 
@@ -238,11 +234,32 @@ window.addEventListener("pageshow", function (event) {
     }
 });
 
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-        hideLoading();
+async function refreshNotifBadge() {
+
+    try {
+
+        const res = await fetch("/admin/notifications/unread-count");
+        const data = await res.json();
+
+        const badge = document.querySelector(".notif-badge");
+
+        if (!badge) return;
+
+        if (data.count > 0) {
+
+            badge.innerText = data.count;
+            badge.classList.remove("hidden");
+
+        } else {
+
+            badge.classList.add("hidden");
+        }
+
+    } catch (err) {
+
+        console.log("notif refresh gagal");
     }
-});
+}
 
 const notifBtn = document.getElementById("notifBtn");
 const notifDropdown = document.getElementById("notifDropdown");
@@ -278,90 +295,6 @@ notifDropdown.addEventListener("click", (e) => {
     e.stopPropagation();
 });
 
-let notifSSE = null;
-const seenNotif = new Set();
-
-function startNotifSSE() {
-
-    // hanya jalan kalau tombol notif ada
-    const notifBtn = document.getElementById("notifBtn");
-    if (!notifBtn) return;
-
-    if (notifSSE) return;
-
-    notifSSE = new EventSource("/admin/notif-stream");
-
-    notifSSE.onmessage = function (event) {
-        const n = JSON.parse(event.data);
-
-        if (seenNotif.has(n.id)) return;
-        seenNotif.add(n.id);
-
-        const list = document.getElementById("notifList");
-        if (!list) return;
-
-        const empty = list.querySelector(".notif-empty");
-        if (empty) empty.remove();
-
-        const item = document.createElement("div");
-        item.className = "notif-item unread";
-
-        item.innerHTML = `
-            <div class="notif-body">
-                <a href="${n.target_url || '#'}"
-                   class="notif-message notif-link no-loading"
-                   data-id="${n.id}">
-                   ${n.message}
-                </a>
-            </div>
-            <div class="notif-footer">
-                <div class="notif-time">${n.time}</div>
-            </div>
-        `;
-
-        list.prepend(item);
-
-        // badge
-        let badge = document.querySelector(".notif-badge");
-        if (!badge) {
-            badge = document.createElement("span");
-            badge.className = "notif-badge";
-            badge.innerText = "1";
-            notifBtn.appendChild(badge);
-        } else {
-            badge.innerText = parseInt(badge.innerText) + 1;
-        }
-    };
-
-    notifSSE.onerror = function () {
-        notifSSE.close();
-        notifSSE = null;
-
-        // reconnect pelan (aman di Railway)
-        setTimeout(startNotifSSE, 5000);
-    };
-}
-
-function stopNotifSSE() {
-    if (notifSSE) {
-        notifSSE.close();
-        notifSSE = null;
-    }
-}
-
-// stop saat tab ditinggal
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-        stopNotifSSE();
-    } else {
-        startNotifSSE();
-    }
-});
-
-// start sekali
-if (!window.DISABLE_NOTIF_SSE) {
-    startNotifSSE();
-}
 
 document.addEventListener("click", (e) => {
     const btn = e.target.closest(".notif-delete");
@@ -510,7 +443,35 @@ window.addEventListener("scroll", () => {
     }
 });
 
-window.DISABLE_NOTIF_SSE = true;
+let notifPolling = null;
+
+function startNotifPolling() {
+
+    if (notifPolling) return;
+
+    notifPolling = setInterval(async () => {
+
+        // stop kalau tab tidak aktif
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+
+        // refresh badge
+        await refreshNotifBadge();
+
+        // reload notif hanya saat dropdown terbuka
+        if (!notifDropdown.classList.contains("hidden")) {
+            await loadNotifications();
+        }
+
+    }, 3000); // 3 detik
+}
+
+// jalankan
+startNotifPolling();
+
+// refresh pertama saat page load
+refreshNotifBadge();
 
 </script>
 </body>
