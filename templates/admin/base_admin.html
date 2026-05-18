@@ -15,6 +15,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -31,6 +33,170 @@
         <button id="modalCancel" class="btn-cancel">Batal</button>
         <button id="modalOk" class="btn-ok">OK</button>
         </div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="settings-modal-overlay hidden">
+
+    <div class="settings-modal-box">
+
+        <!-- CLOSE -->
+        <button
+            type="button"
+            class="settings-close-btn"
+            id="closeSettingsModal">
+
+            <i data-lucide="x"></i>
+
+        </button>
+
+        <!-- TOP -->
+        <div class="settings-modal-top">
+
+            <div class="settings-icon">
+                <i data-lucide="shield-check"></i>
+            </div>
+
+            <h2>Keamanan Akun</h2>
+
+            <p>
+                Kelola username dan password login administrator
+            </p>
+
+        </div>
+
+        <!-- FORM -->
+        <form
+            id="settingsForm"
+            action="/settings/update"
+            method="POST"
+            class="settings-form-modern">
+
+            <!-- USERNAME -->
+            <div class="settings-group">
+
+                <label>Username</label>
+
+                <div class="settings-input-box">
+
+                    <div class="settings-input-icon">
+                        <i data-lucide="user"></i>
+                    </div>
+
+                    <input
+                        type="text"
+                        name="username"
+                        value="{{ admin.username }}"
+                        required>
+
+                </div>
+            </div>
+
+            <div class="settings-group">
+
+                <label>Password Baru</label>
+
+                <div class="settings-input-box">
+
+                    <div class="settings-input-icon">
+                        <i data-lucide="lock"></i>
+                    </div>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Kosongkan jika tidak diganti">
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-target="password">
+                        <i data-lucide="eye"></i>
+                    </button>
+
+                </div>
+            </div>
+
+            <div class="settings-group">
+
+                <label>Konfirmasi Password</label>
+
+                <div class="settings-input-box">
+
+                    <div class="settings-input-icon">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+
+                    <input
+                        id="confirm_password"
+                        class="form-input"
+                        type="password"
+                        name="confirm_password"
+                        placeholder="Ulangi password baru">
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-target="confirm_password">
+                        <i data-lucide="eye"></i>
+                    </button>
+
+                </div>
+
+                <small
+                    id="password-error"
+                    class="password-error hidden"
+                >
+                    Password tidak sama
+                </small>
+            </div>
+
+            <!-- ACTION -->
+            <div class="settings-actions">
+
+                <button
+                    type="button"
+                    class="btn-settings-cancel"
+                    id="cancelSettingsModal">
+
+                    Batal
+
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn-settings-save">
+
+                    <i data-lucide="save"></i>
+                    Simpan
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<div id="cropModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:500px">
+
+        <h3>Crop Foto</h3>
+
+        <div style="width:100%; max-height:400px;">
+            <img id="cropImage" style="max-width:100%;">
+        </div>
+
+        <div class="modal-actions">
+            <button id="cancelCrop" class="btn-cancel">Batal</button>
+            <button id="applyCrop" class="btn-ok">Simpan</button>
+        </div>
+
     </div>
 </div>
 
@@ -89,9 +255,18 @@
     <div class="header-right">
 
         <!-- SEARCH -->
-        <div class="header-search">
+        <div class="header-search" id="headerSearch">
+
             <i data-lucide="search"></i>
-            <input type="text" placeholder="Cari...">
+
+            <input
+                type="text"
+                id="searchSurveyInput"
+                placeholder="Cari survey...">
+
+            <div class="search-dropdown hidden" id="searchDropdown">
+            </div>
+
         </div>
 
         <!-- NOTIFICATION -->
@@ -124,8 +299,61 @@
         </div>
 
         <!-- PROFILE -->
-        <div class="admin-profile">
-            <img src="{{ url_for('static', filename='img/profile.png') }}">
+        <div class="admin-profile-wrapper">
+
+            <button class="admin-profile-btn" id="profileBtn">
+
+                <img
+                    src="{{ admin.photo if admin and admin.photo else url_for('static', filename='img/profile.png') }}"
+                    alt="Profile">
+
+                <div class="admin-profile-info">
+                    <span class="profile-name">
+                        {{ admin.display_name if admin and admin.display_name else "Administrator" }}
+                    </span>
+
+                    <span class="profile-role">
+                        {{ admin.role if admin else "Admin" }}
+                    </span>
+                </div>
+
+                <i data-lucide="chevron-down"></i>
+            </button>
+
+            <!-- DROPDOWN -->
+            <div class="profile-dropdown hidden" id="profileDropdown">
+
+                <label class="profile-upload">
+
+                    <input
+                        type="file"
+                        id="profilePhotoInput"
+                        accept="image/*"
+                        hidden>
+
+                    <i data-lucide="image-plus"></i>
+                    <span>Ganti Foto</span>
+
+                </label>
+
+                <button
+                    type="button"
+                    class="profile-menu-item"
+                    id="openSettingsModal">
+
+                    <i data-lucide="settings"></i>
+                    <span>Pengaturan</span>
+
+                </button>
+
+                <div class="profile-divider"></div>
+
+                <a href="/logout" class="profile-menu-item logout">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </a>
+
+            </div>
         </div>
 
     </div>
@@ -173,15 +401,42 @@ console.log("NOTIF SCRIPT LOADED");
 const loading = document.getElementById("globalLoading");
 
 document.querySelectorAll("form").forEach(form => {
+
     form.addEventListener("submit", (e) => {
 
         if (form.classList.contains("confirm-delete")) {
             return;
         }
 
+        // ❌ JANGAN tampilkan loading untuk settingsForm kalau invalid
+        if (form.id === "settingsForm") {
+            const password = passwordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+
+            if (!password || password !== confirmPassword) {
+                return; // biarkan handler settings yang urus
+            }
+        }
+
         loading.style.display = "flex";
     });
 });
+
+function closeAllHeaderDropdowns(except = null) {
+
+    const dropdowns = [
+        document.getElementById("notifDropdown"),
+        document.getElementById("profileDropdown"),
+        document.getElementById("searchDropdown")
+    ];
+
+    dropdowns.forEach(dd => {
+        if (!dd) return;
+        if (dd !== except) {
+            dd.classList.add("hidden");
+        }
+    });
+}
 
 document.querySelectorAll("a").forEach(link => {
     link.addEventListener("click", (e) => {
@@ -297,24 +552,21 @@ if (notifBtn && notifDropdown) {
     notifBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
 
-        notifDropdown.classList.toggle("hidden");
+        const isOpen = !notifDropdown.classList.contains("hidden");
 
-        if (!notifDropdown.classList.contains("hidden")) {
+        // tutup semua dulu
+        closeAllHeaderDropdowns();
+
+        // toggle notif
+        if (!isOpen) {
+            notifDropdown.classList.remove("hidden");
+
             await loadNotifications();
 
-            await fetch("/admin/notifications/read", {
-                method: "POST"
-            });
+            await fetch("/admin/notifications/read", { method: "POST" });
 
             const badge = document.querySelector(".notif-badge");
-            if (badge) {
-                badge.innerText = "0";
-                badge.classList.add("hidden");
-            }
-
-            // hapus status unread di UI
-            document.querySelectorAll(".notif-item.unread")
-                .forEach(el => el.classList.remove("unread"));
+            if (badge) badge.classList.add("hidden");
         }
     });
 }
@@ -508,11 +760,9 @@ async function loadNotifications(forceRender = false) {
             </div>
         `;
 
-        // hapus empty state
         const empty = list.querySelector(".notif-empty");
         if (empty) empty.remove();
 
-        // prepend notif baru
         list.prepend(item);
 
         requestAnimationFrame(() => {
@@ -530,10 +780,8 @@ document.addEventListener("click", async (e) => {
 
     e.preventDefault();
 
-    // tandai notif ini sudah dibaca
     await fetch(`/admin/notification/${id}`);
 
-    // redirect manual
     window.location.href = link.href;
 });
 
@@ -556,14 +804,10 @@ function startNotifPolling() {
             return;
         }
 
-        // cek apakah count berubah
         const changed = await refreshNotifBadge();
 
-        // reload notif HANYA jika berubah
-        // dan dropdown sedang terbuka
         if (changed) {
 
-            // update list realtime
             await loadNotifications();
 
         }
@@ -574,16 +818,374 @@ function startNotifPolling() {
 
 startNotifPolling();
 
-// refresh pertama saat page load
 (async () => {
 
     await refreshNotifBadge();
-
-    // render notif awal
     await loadNotifications(true);
 
 })();
 
+const searchInput = document.getElementById("searchSurveyInput");
+const searchDropdown = document.getElementById("searchDropdown");
+
+if (searchInput && searchDropdown) {
+
+    searchInput.addEventListener("input", () => {
+
+        const keyword = searchInput.value
+            .trim()
+            .toLowerCase();
+
+        if (!keyword) {
+            searchDropdown.classList.add("hidden");
+            searchDropdown.innerHTML = "";
+            return;
+        }
+
+        const results = window.searchSurveyData.filter(item =>
+            item.title.toLowerCase().includes(keyword)
+        );
+
+        if (results.length === 0) {
+
+            searchDropdown.innerHTML = `
+                <div class="search-empty">
+                    Survey tidak ditemukan
+                </div>
+            `;
+
+            searchDropdown.classList.remove("hidden");
+
+            return;
+        }
+
+        searchDropdown.innerHTML = results.map(item => `
+            <div
+                class="search-item"
+                data-url="${item.url}">
+
+                <div class="search-title">
+                    ${item.title}
+                </div>
+
+                <div class="search-sub">
+                    Klik untuk membuka survey
+                </div>
+
+            </div>
+        `).join("");
+
+        searchDropdown.classList.remove("hidden");
+    });
+
+    // klik hasil
+    searchDropdown.addEventListener("click", (e) => {
+
+        const item = e.target.closest(".search-item");
+
+        if (!item) return;
+
+        window.location.href = item.dataset.url;
+    });
+
+    // tutup dropdown
+    document.addEventListener("click", (e) => {
+
+        if (!e.target.closest("#headerSearch")) {
+            searchDropdown.classList.add("hidden");
+        }
+    });
+}
+
+const profileBtn = document.getElementById("profileBtn");
+const profileDropdown = document.getElementById("profileDropdown");
+
+if (profileBtn && profileDropdown) {
+
+    profileBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+
+        const isOpen = !profileDropdown.classList.contains("hidden");
+
+        // tutup semua dulu
+        closeAllHeaderDropdowns();
+
+        // toggle profile
+        if (!isOpen) {
+            profileDropdown.classList.remove("hidden");
+        }
+    });
+
+    profileDropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+}
+
+profileDropdown.addEventListener("click", (e) => {
+    e.stopPropagation();
+});
+
+document.addEventListener("click", () => {
+
+    profileDropdown.classList.add("hidden");
+});
+
+const settingsModal =
+    document.getElementById("settingsModal");
+
+const openSettingsModal =
+    document.getElementById("openSettingsModal");
+
+const closeSettingsModal =
+    document.getElementById("closeSettingsModal");
+
+const cancelSettingsModal =
+    document.getElementById("cancelSettingsModal");
+
+function closeSettings() {
+    settingsModal.classList.add("hidden");
+}
+
+if (openSettingsModal) {
+
+    openSettingsModal.addEventListener("click", () => {
+
+        profileDropdown.classList.add("hidden");
+
+        settingsModal.classList.remove("hidden");
+
+        lucide.createIcons();
+    });
+}
+
+closeSettingsModal.addEventListener("click", closeSettings);
+cancelSettingsModal.addEventListener("click", closeSettings);
+
+const settingsForm =
+    document.getElementById("settingsForm");
+
+    const passwordInput =
+    document.getElementById("password");
+
+const confirmPasswordInput =
+    document.getElementById("confirm_password");
+
+const passwordError =
+    document.getElementById("password-error");
+
+// VALIDASI REALTIME
+function validatePasswordMatch() {
+
+    const password =
+        passwordInput.value;
+
+    const confirmPassword =
+        confirmPasswordInput.value;
+
+    // reset
+    confirmPasswordInput.classList.remove("input-error");
+    passwordError.classList.add("hidden");
+
+    // kalau confirm masih kosong
+    if (!confirmPassword) {
+        return;
+    }
+
+    // tidak sama
+    if (password !== confirmPassword) {
+
+        confirmPasswordInput
+            .closest(".settings-input-box")
+            .classList.add("input-error");
+
+        passwordError.classList.remove("hidden");
+    }
+}
+
+passwordInput.addEventListener(
+    "input",
+    validatePasswordMatch
+);
+
+confirmPasswordInput.addEventListener(
+    "input",
+    validatePasswordMatch
+);
+
+settingsForm.addEventListener("submit", function (e) {
+
+    e.preventDefault(); // ⬅️ penting supaya FULL CONTROL di JS
+
+    const password = passwordInput.value.trim();
+    const confirmPassword = confirmPasswordInput.value.trim();
+
+    let hasError = false;
+
+    confirmPasswordInput
+        .closest(".settings-input-box")
+        .classList.remove("input-error");
+
+    passwordError.classList.add("hidden");
+
+    if (!password) {
+
+        passwordError.textContent = "Password wajib diisi";
+        passwordError.classList.remove("hidden");
+
+        // 🔴 kasih error ke PASSWORD INPUT juga
+        passwordInput
+            .closest(".settings-input-box")
+            .classList.add("input-error");
+
+        confirmPasswordInput
+            .closest(".settings-input-box")
+            .classList.add("input-error");
+
+        passwordInput.focus();
+        hasError = true;
+    }
+
+    if (!hasError && password !== confirmPassword) {
+        passwordError.textContent = "Password tidak sama";
+        passwordError.classList.remove("hidden");
+
+        confirmPasswordInput
+            .closest(".settings-input-box")
+            .classList.add("input-error");
+
+        hasError = true;
+    }
+
+    if (hasError) return;
+
+    // kirim manual (biar loading hanya saat valid)
+    loading.style.display = "flex";
+    settingsForm.submit();
+});
+
+const cropModal = document.getElementById("cropModal");
+const cropImage = document.getElementById("cropImage");
+const cancelCrop = document.getElementById("cancelCrop");
+const applyCrop = document.getElementById("applyCrop");
+
+let cropper;
+let selectedFile;
+let originalMimeType;
+
+profilePhotoInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    selectedFile = file;
+    originalMimeType = file.type;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        cropImage.src = reader.result;
+        cropModal.classList.remove("hidden");
+
+        if (typeof Cropper === "undefined") {
+            console.error("CropperJS tidak ter-load");
+            return;
+        }
+
+        if (cropper) cropper.destroy();
+
+        cropper = new Cropper(cropImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: "move",
+            autoCropArea: 1
+        });
+    };
+
+    reader.readAsDataURL(file);
+});
+
+cancelCrop.addEventListener("click", () => {
+    cropModal.classList.add("hidden");
+    cropper.destroy();
+    cropper = null;
+    profilePhotoInput.value = "";
+});
+
+applyCrop.addEventListener("click", async () => {
+
+    const canvas = cropper.getCroppedCanvas({
+        width: 300,
+        height: 300,
+        fillColor: originalMimeType === "image/jpeg" ? "#fff" : "transparent"
+    });
+
+    // ambil ekstensi asli
+    const ext = originalMimeType.split("/")[1]; // jpeg | png | webp
+    const filename = `profile.${ext}`;
+
+    canvas.toBlob(async (blob) => {
+
+        const formData = new FormData();
+        formData.append("photo", blob, filename);
+
+        const res = await fetch("/upload-profile-photo", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+
+            document.querySelectorAll(".admin-profile-btn img")
+                .forEach(img => {
+                    img.src = data.photo_url + "?t=" + Date.now();
+                });
+
+            cropModal.classList.add("hidden");
+            cropper.destroy();
+            cropper = null;
+            profilePhotoInput.value = "";
+        }
+
+    }, originalMimeType, 0.9);
+});
+
+document.querySelectorAll(".password-toggle").forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+
+        // cari SVG di dalam button
+        const svg = btn.querySelector("svg");
+
+        if (!svg) return;
+
+        // ganti icon via attribute resmi Lucide
+        svg.setAttribute(
+            "data-lucide",
+            isPassword ? "eye-off" : "eye"
+        );
+
+        lucide.createIcons();
+    });
+
+});
+</script>
+
+<script>
+    window.searchSurveyData = [
+        {% for s in surveys %}
+        {
+            id: "{{ s.id }}",
+            title: {{ s.title|tojson }},
+            url: "/admin/survey/{{ s.id }}/detail"
+        },
+        {% endfor %}
+    ];
 </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
-from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file, jsonify, current_app
+from flask import Flask, abort, render_template, request, redirect, url_for, session, send_file, jsonify, flash
 from datetime import datetime
 from markupsafe import Markup
+from werkzeug.utils import secure_filename
 import json, os
 from openpyxl import Workbook
 import io, uuid
@@ -8,7 +9,10 @@ from openpyxl.styles import Font, Alignment
 from openpyxl.utils import get_column_letter
 from dotenv import load_dotenv
 from collections import Counter
-import json
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
 
 load_dotenv()
 
@@ -16,6 +20,7 @@ def format_date(date_str):
     return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d-%m-%Y")
 
 app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.jinja_env.globals.update(format_date=format_date)
@@ -33,6 +38,14 @@ db = SQLAlchemy(app)
 
 from flask_migrate import Migrate
 migrate = Migrate(app, db)
+
+ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
+
+def allowed_image(filename):
+    return (
+        "." in filename and
+        filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+    )
 
 def create_notification(message, notif_type="info", target_url=None):
 
@@ -134,6 +147,36 @@ class Notification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(30))
 
+class Admin(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    username = db.Column(db.String(100))
+    password = db.Column(db.String(255))
+
+    photo = db.Column(
+        db.String(255),
+        default="/static/img/profile.png"
+    )
+
+    display_name = db.Column(
+        db.String(100),
+        default="Administrator"
+    )
+
+@app.context_processor
+def inject_admin():
+
+    admin = None
+
+    if session.get("admin_id"):
+
+        admin = Admin.query.get(
+            session.get("admin_id")
+        )
+
+    return dict(admin=admin)
+
 # -----------------------------
 # LOGIN ADMIN
 # -----------------------------
@@ -142,16 +185,33 @@ def admin_login():
     error = None
 
     if request.method == "POST":
+
         username = request.form["username"]
         password = request.form["password"]
 
-        if username == "admin" and password == "admin123":
+        admin = Admin.query.filter_by(
+            username=username
+        ).first()
+
+        if admin and check_password_hash(
+            admin.password,
+            password
+        ):
+
             session["admin"] = True
-            return redirect(url_for("admin_dashboard"))
+            session["admin_id"] = admin.id
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
         else:
             error = "Username atau password salah"
 
-    return render_template("admin/login.html", error=error)
+    return render_template(
+        "admin/login.html",
+        error=error
+    )
 
 @app.route("/")
 def home():
@@ -162,26 +222,24 @@ def admin_dashboard():
 
     if not session.get("admin"):
         return redirect(url_for("admin_login"))
+    
+    admin = Admin.query.get(
+        session.get("admin_id")
+    )
 
     surveys = Survey.query.all()
-
     total_survey = Survey.query.count()
-
     total_responden = SurveyResponse.query.count()
-
     survey_aktif = Survey.query.filter_by(
         is_active=True
     ).count()
 
     return render_template(
         "admin/dashboard.html",
-
         surveys=surveys,
-
         total_survey=total_survey,
         total_responden=total_responden,
         survey_aktif=survey_aktif,
-
         active_page="dashboard"
     )
 
@@ -189,20 +247,15 @@ def admin_dashboard():
 def dashboard_chart_data(survey_id, q_index):
 
     survey = Survey.query.get_or_404(survey_id)
-
     questions = json.loads(survey.questions or "[]")
-
     target_question = None
-
     nomor = 1
 
     for section in questions:
         for q in section.get("questions", []):
-
             if nomor == q_index:
                 target_question = q
                 break
-
             nomor += 1
 
     if not target_question:
@@ -228,9 +281,7 @@ def dashboard_chart_data(survey_id, q_index):
     ).all()
 
     counter = Counter()
-
     answer_key = f"q{q_index}"
-
     label_map = {}
 
     for opt in target_question.get("options", []):
@@ -347,6 +398,91 @@ def delete_notification(notif_id):
         db.session.commit()
 
     return jsonify({"success": True})
+
+@app.route("/upload-profile-photo", methods=["POST"])
+def upload_profile_photo():
+
+    if not session.get("admin"):
+        return jsonify({"success": False}), 401
+
+    file = request.files.get("photo")
+    if not file or file.filename == "":
+        return jsonify({"success": False, "error": "File kosong"}), 400
+
+    if not allowed_image(file.filename):
+        return jsonify({
+            "success": False,
+            "error": "Format file tidak didukung"
+        }), 400
+
+    # ambil ekstensi asli
+    ext = file.filename.rsplit(".", 1)[1].lower()
+
+    # nama unik (uuid)
+    filename = f"profile_{uuid.uuid4().hex}.{ext}"
+
+    upload_folder = os.path.join(app.static_folder, "uploads")
+    os.makedirs(upload_folder, exist_ok=True)
+
+    path = os.path.join(upload_folder, filename)
+    file.save(path)
+
+    admin = Admin.query.get(session.get("admin_id"))
+
+    # 🔥 hapus foto lama jika bukan default
+    if admin.photo and admin.photo.startswith("/static/uploads/"):
+        old_path = os.path.join(
+            app.root_path,
+            admin.photo.lstrip("/")
+        )
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    admin.photo = f"/static/uploads/{filename}"
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "photo_url": admin.photo
+    })
+
+@app.route("/settings/update", methods=["POST"])
+def update_admin_settings():
+
+    if "admin_id" not in session:
+        return redirect("/login")
+
+    admin_id = session["admin_id"]
+
+    username = request.form.get("username")
+    password = request.form.get("password")
+    confirm_password = request.form.get("confirm_password")
+
+    # validasi password
+    if password and password != confirm_password:
+
+        flash("Konfirmasi password tidak cocok", "error")
+        return redirect(request.referrer)
+
+    # ambil admin
+    admin = Admin.query.get(admin_id)
+
+    if not admin:
+        flash("Admin tidak ditemukan", "error")
+        return redirect(request.referrer)
+
+    # update username
+    admin.username = username
+
+    # update password jika diisi
+    if password:
+        admin.password = generate_password_hash(password)
+
+    db.session.commit()
+
+    flash("Pengaturan berhasil diperbarui", "success")
+
+    return redirect(request.referrer)
 
 @app.route("/admin/notification/<int:notif_id>")
 def open_notification(notif_id):
@@ -1429,6 +1565,15 @@ def logout():
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
+
+        admin = Admin.query.filter_by(
+            username="admin"
+        ).first()
+
+        if admin:
+            admin.password = generate_password_hash("admin123")
+            db.session.commit()
+
+            print("Password admin berhasil direset")
 
     app.run()
