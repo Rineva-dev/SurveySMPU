@@ -438,3 +438,64 @@
     background: #eef2ff;
     border-radius: 12px;
 }
+
+/* =========================
+   SURVEY DESCRIPTION
+========================= */
+
+.survey-description{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    margin-top:10px;
+    padding:14px 16px;
+
+    background:#f8fafc;
+    border:1px dashed #e2e8f0;
+    border-radius:14px;
+
+    font-size:14px;
+    color:#334155;
+    line-height:1.7;
+}
+
+.survey-description i{
+    width:18px;
+    height:18px;
+    margin-top:2px;
+    color:#64748b;
+    flex-shrink:0;
+}
+
+.survey-description-text{
+    flex:1;
+}
+
+.survey-description-text p{
+    margin:0;
+}
+
+.survey-description-text ul,
+.survey-description-text ol{
+    margin:6px 0 0 18px;
+}
+
+/* =========================
+   RESPONDENT META
+========================= */
+
+.response-user-meta{
+    display:flex;
+    align-items:center;
+    gap:6px;
+
+    font-size:13px;
+    color:#64748b;
+    margin-top:4px;
+}
+
+.response-user-meta i{
+    width:14px;
+    height:14px;
+    color:#475569;
+}

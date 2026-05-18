@@ -1351,6 +1351,7 @@ input, textarea {
 
 .settings-input-box {
     display: flex;
+    position: relative;
     align-items: center;
     border: 1px solid #d1d5db;
     border-radius: 10px;
@@ -1419,7 +1420,7 @@ input, textarea {
 
     background:transparent;
 
-    padding:0 18px !important;
+    padding:0 56px 0 18px;
     margin:0 !important;
 
     font-size:15px;
@@ -1456,6 +1457,11 @@ input, textarea {
     border: none;
     cursor: pointer;
     color: #64748b;
+}
+
+.password-toggle svg{
+    width:18px;
+    height:18px;
 }
 
 .password-toggle:hover {

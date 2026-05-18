@@ -18,6 +18,15 @@
         {{ survey.title }}
     </h3>
 
+    {% if survey.description %}
+    <div class="survey-description">
+        <i data-lucide="info"></i>
+        <div class="survey-description-text">
+            {{ survey.description | safe }}
+        </div>
+    </div>
+    {% endif %}
+
     <div class="survey-stats">
 
         <!-- TOTAL RESPONDEN -->
@@ -162,9 +171,21 @@
                         Responden {{ loop.index }}
                     </div>
 
-                    <div class="response-user-email">
-                        {{ r.email or 'Tanpa Email' }}
+                    <!-- EMAIL -->
+                    {% if survey.email_enabled %}
+                    <div class="response-user-meta">
+                        <i data-lucide="mail"></i>
+                        {{ r.email or '—' }}
                     </div>
+                    {% endif %}
+
+                    <!-- UNSUR -->
+                    {% if r.unsur_responden %}
+                    <div class="response-user-meta">
+                        <i data-lucide="layers"></i>
+                        {{ r.unsur_responden }}
+                    </div>
+                    {% endif %}
 
                 </div>
 
@@ -174,14 +195,9 @@
                     method="post"
                     onsubmit="return confirm('Hapus respon ini?')"
                 >
-
-                    <button
-                        type="submit"
-                        class="icon-btn delete"
-                    >
+                    <button type="submit" class="icon-btn delete">
                         <i data-lucide="trash-2"></i>
                     </button>
-
                 </form>
 
             </div>

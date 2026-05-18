@@ -723,7 +723,19 @@ function removeSession(btn) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+
+{% if not is_edit %}
+    // CREATE MODE
     addSession();
+{% endif %}
+
+{% if is_edit %}
+    // EDIT MODE
+    document.getElementById('session-container').innerHTML = '';
+
+    // lanjut load existing survey
+{% endif %}
+
 });
 
 function handleAnswerType(select) {
@@ -881,18 +893,18 @@ const quill = new Quill('#editor-pembuka', {
     modules: {
         toolbar: [
             ['bold', 'italic', 'underline'],
-
             [{ list: 'ordered' }, { list: 'bullet' }],
-
-            [{ indent: '-1' }, { indent: '+1' }],   // 🔥 INI PENTING
-
+            [{ indent: '-1' }, { indent: '+1' }],
             ['clean']
         ]
     }
 });
 
-document.querySelector("form").addEventListener("submit", function () {
-    document.getElementById("pembuka-input").value = quill.root.innerHTML;
+const pembukaInput =
+    document.getElementById("pembuka-input");
+
+quill.on('text-change', function () {
+    pembukaInput.value = quill.root.innerHTML;
 });
 
 function addUnsur() {
@@ -1005,7 +1017,12 @@ window.addEventListener('DOMContentLoaded', () => {
         `{{ survey.end_date }}`;
 
     // quill
-    quill.root.innerHTML = {{ survey.description|tojson }};
+    {% if is_edit %}
+    const pembukaValue = {{ survey.description|tojson }};
+
+    quill.root.innerHTML = pembukaValue;
+    pembukaInput.value = pembukaValue;
+    {% endif %}
 
     // unsur
     const unsurList =

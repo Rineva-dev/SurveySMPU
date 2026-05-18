@@ -1330,10 +1330,10 @@
 .radio-pill{
     position:relative;
     display:flex;
-    align-items:center;
-    gap:12px;
-
-    min-width:220px;
+    align-items: flex-start;
+    gap:10px;
+    flex: 1 1 220px;
+    max-width: 100%;
 
     padding:12px 14px;
 
@@ -1343,6 +1343,12 @@
 
     cursor:pointer;
     transition:all .2s ease;
+}
+
+.radio-pill i{
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 .radio-pill:hover{
@@ -1393,6 +1399,8 @@
     display:flex;
     flex-direction:column;
     gap:2px;
+    min-width:0;
+    white-space: normal;
 }
 
 .pill-title{
