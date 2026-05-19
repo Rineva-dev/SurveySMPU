@@ -13,17 +13,39 @@ from werkzeug.security import (
     generate_password_hash,
     check_password_hash
 )
+from datetime import timedelta
+from functools import wraps
 
 load_dotenv()
 
 def format_date(date_str):
     return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d-%m-%Y")
 
+def admin_login_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("admin_id"):
+            flash(
+                "Sesi Anda telah berakhir. Silakan login kembali.",
+                "warning"
+            )
+            return redirect(url_for("admin_login"))
+        return f(*args, **kwargs)
+    return wrapper
+
 app = Flask(__name__)
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.jinja_env.globals.update(format_date=format_date)
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=True
+)
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -61,6 +83,7 @@ def create_notification(message, notif_type="info", target_url=None):
 
 class Survey(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     start_date = db.Column(db.String(20))
@@ -69,12 +92,14 @@ class Survey(db.Model):
     email_enabled = db.Column(db.Boolean, default=True)
     email_required = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(30))
-    questions = db.Column(db.Text) 
+    questions = db.Column(db.Text)
     unsur_responden = db.Column(db.Text)
+
     responses = db.relationship(
         'SurveyResponse',
         backref='survey',
-        lazy=True
+        lazy=True,
+        cascade="all, delete-orphan"
     )
     @property
     def total_responden(self):
@@ -193,17 +218,14 @@ def admin_login():
             username=username
         ).first()
 
-        if admin and check_password_hash(
-            admin.password,
-            password
-        ):
+        if admin and check_password_hash(admin.password, password):
 
+            session.clear()
+            session.permanent = True
             session["admin"] = True
             session["admin_id"] = admin.id
 
-            return redirect(
-                url_for("admin_dashboard")
-            )
+            return redirect(url_for("admin_dashboard"))
 
         else:
             error = "Username atau password salah"
@@ -218,10 +240,8 @@ def home():
     return redirect(url_for("admin_login"))
 
 @app.route("/dashboard")
+@admin_login_required
 def admin_dashboard():
-
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
     
     admin = Admin.query.get(
         session.get("admin_id")
@@ -321,6 +341,7 @@ def dashboard_chart_data(survey_id, q_index):
     })
 
 @app.route("/admin/notifications/unread-count")
+@admin_login_required
 def unread_count():
 
     if not session.get("admin"):
@@ -335,6 +356,7 @@ def unread_count():
     })
 
 @app.route("/admin/notifications/read", methods=["POST"])
+@admin_login_required
 def mark_all_notifications_read():
     if not session.get("admin"):
         return jsonify({"success": False})
@@ -346,19 +368,28 @@ def mark_all_notifications_read():
     return jsonify({"success": True})
 
 @app.route("/survey")
+@admin_login_required
 def admin_survey():
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 5, type=int)
 
-    surveys = Survey.query.all()
+    pagination = Survey.query.order_by(
+        Survey.id.desc()
+    ).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
 
     return render_template(
         "admin/survey.html",
-        surveys=surveys,
-        active_page="survey"
+        surveys=pagination.items,
+        pagination=pagination,
+        per_page=per_page
     )
 
 @app.route("/admin/notifikasi")
+@admin_login_required
 def get_notifications():
     notifs = Notification.query.order_by(
         Notification.id.desc()
@@ -377,6 +408,7 @@ def get_notifications():
     ])
 
 @app.route("/admin/notifications/clear", methods=["POST"])
+@admin_login_required
 def clear_notifications():
     if not session.get("admin"):
         return jsonify({"success": False})
@@ -387,6 +419,7 @@ def clear_notifications():
     return jsonify({"success": True})
 
 @app.route("/admin/notifications/delete/<int:notif_id>", methods=["POST"])
+@admin_login_required
 def delete_notification(notif_id):
     if not session.get("admin"):
         return jsonify({"success": False})
@@ -400,6 +433,7 @@ def delete_notification(notif_id):
     return jsonify({"success": True})
 
 @app.route("/upload-profile-photo", methods=["POST"])
+@admin_login_required
 def upload_profile_photo():
 
     if not session.get("admin"):
@@ -427,7 +461,7 @@ def upload_profile_photo():
     path = os.path.join(upload_folder, filename)
     file.save(path)
 
-    admin = Admin.query.get(session.get("admin_id"))
+    admin = db.session.get(Admin, session.get("admin_id"))
 
     # 🔥 hapus foto lama jika bukan default
     if admin.photo and admin.photo.startswith("/static/uploads/"):
@@ -447,6 +481,7 @@ def upload_profile_photo():
     })
 
 @app.route("/settings/update", methods=["POST"])
+@admin_login_required
 def update_admin_settings():
 
     if "admin_id" not in session:
@@ -485,10 +520,8 @@ def update_admin_settings():
     return redirect(request.referrer)
 
 @app.route("/admin/notification/<int:notif_id>")
+@admin_login_required
 def open_notification(notif_id):
-
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
     notif = Notification.query.get_or_404(notif_id)
 
@@ -504,9 +537,8 @@ def open_notification(notif_id):
     return redirect(url_for("admin_dashboard"))
 
 @app.route("/admin/survey/tambah", methods=["GET", "POST"])
+@admin_login_required
 def admin_survey_tambah():
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
     if request.method == "POST":
         title = request.form.get("title")
@@ -653,11 +685,10 @@ def admin_survey_tambah():
     return render_template("admin/survey_form.html", active_page="survey")
 
 @app.route("/admin/survey/<int:survey_id>/toggle", methods=["POST"])
+@admin_login_required
 def toggle_survey_status(survey_id):
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
-    survey = Survey.query.get(survey_id)
+    survey = db.session.get(Survey, survey_id)
 
     if survey:
         survey.is_active = not survey.is_active
@@ -666,10 +697,8 @@ def toggle_survey_status(survey_id):
     return redirect(url_for("admin_survey"))
 
 @app.route("/admin/survey/<int:survey_id>/edit", methods=["GET", "POST"])
+@admin_login_required
 def edit_survey(survey_id):
-
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
     survey = Survey.query.get_or_404(survey_id)
     
@@ -817,10 +846,8 @@ def edit_survey(survey_id):
 
 
 @app.route("/admin/survey/<int:survey_id>/detail")
+@admin_login_required
 def detail_survey(survey_id):
-
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
     
     response_id = request.args.get("response_id", type=int)
 
@@ -850,10 +877,8 @@ def detail_survey(survey_id):
 
 
 @app.post("/admin/respon/<int:response_id>/hapus")
+@admin_login_required
 def hapus_respon(response_id):
-
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
     response = SurveyResponse.query.get_or_404(response_id)
 
@@ -863,11 +888,10 @@ def hapus_respon(response_id):
     return redirect(request.referrer or url_for("admin_survey"))
 
 @app.route("/admin/survey/<int:survey_id>/hapus", methods=["POST"])
+@admin_login_required
 def hapus_survey(survey_id):
-    if not session.get("admin"):
-        return redirect(url_for("admin_login"))
 
-    survey = Survey.query.get(survey_id)
+    survey = db.session.get(Survey, survey_id)
 
     if survey:
         db.session.delete(survey)
@@ -1149,15 +1173,9 @@ def nl2br(value):
         return ""
     return Markup(value.replace("\n", "<br>"))
 
-@app.route(
-    "/admin/survey/<int:survey_id>/download"
-)
+@app.route("/admin/survey/<int:survey_id>/download")
+@admin_login_required
 def download_survey(survey_id):
-
-    if not session.get("admin"):
-        return redirect(
-            url_for("admin_login")
-        )
 
     survey = Survey.query.get_or_404(
         survey_id

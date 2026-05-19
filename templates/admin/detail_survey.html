@@ -302,7 +302,16 @@
 
                                 {% else %}
 
-                                    {% set answer = r.answers_json.get(answer_key) %}
+                                    {% if q.type == 'isian' %}
+
+                                        {% set single_key = answer_key ~ '_0' %}
+                                        {% set answer = r.answers_json.get(single_key) %}
+
+                                    {% else %}
+
+                                        {% set answer = r.answers_json.get(answer_key) %}
+
+                                    {% endif %}
 
                                     {% if answer is iterable and answer is not string %}
 

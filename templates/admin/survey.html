@@ -27,7 +27,7 @@
         <tbody>
             {% for s in surveys %}
             <tr>
-                <td>{{ loop.index }}</td>
+                <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
                 <td>
                     <div class="survey-title-box">
 
@@ -121,6 +121,80 @@
         </div>
         </tbody>
     </table>
+</div>
+
+<div class="table-footer-card">
+    <div class="table-footer">
+
+        <!-- LEFT -->
+        <div class="table-info">
+            Menampilkan
+            <form method="get" style="display:inline;">
+                <input
+                    type="number"
+                    name="per_page"
+                    min="1"
+                    max="1000"
+                    value="{{ pagination.per_page }}"
+                    class="per-page-input"
+                >
+                dari <b>{{ pagination.total }}</b> data
+            </form>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="pagination">
+            {% set window = 5 %}
+
+                {% set start = pagination.page - (window // 2) %}
+                {% set end = pagination.page + (window // 2) %}
+
+                {% if start < 1 %}
+                    {% set start = 1 %}
+                    {% set end = window %}
+                {% endif %}
+
+                {% if end > pagination.pages %}
+                    {% set end = pagination.pages %}
+                    {% set start = pagination.pages - window + 1 %}
+                    {% if start < 1 %}
+                        {% set start = 1 %}
+                    {% endif %}
+                {% endif %}
+
+                <!-- PREV -->
+                {% if pagination.has_prev %}
+                    <a class="page-btn-prev"
+                    href="?page={{ pagination.prev_num }}&per_page={{ pagination.per_page }}">
+                        Prev
+                    </a>
+                {% else %}
+                    <span class="page-btn-prev disabled">Prev</span>
+                {% endif %}
+
+                <!-- NUMBERS (MAX 5 SLIDING) -->
+                {% for p in range(start, end + 1) %}
+                    {% if p == pagination.page %}
+                        <span class="page-btn active">{{ p }}</span>
+                    {% else %}
+                        <a class="page-btn"
+                        href="?page={{ p }}&per_page={{ pagination.per_page }}">
+                            {{ p }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- NEXT -->
+                {% if pagination.has_next %}
+                    <a class="page-btn-next"
+                    href="?page={{ pagination.next_num }}&per_page={{ pagination.per_page }}">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="page-btn-next disabled">Next</span>
+                {% endif %}
+        </div>
+    </div>
 </div>
 
 <div id="shareModal" class="modal hidden">
