@@ -15,6 +15,8 @@ from werkzeug.security import (
 )
 from datetime import timedelta
 from functools import wraps
+import cloudinary
+import cloudinary.uploader
 
 load_dotenv()
 
@@ -34,10 +36,10 @@ def admin_login_required(f):
     return wrapper
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(32).hex())
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 app.jinja_env.globals.update(format_date=format_date)
 
@@ -47,12 +49,21 @@ app.config.update(
     SESSION_COOKIE_SECURE=True
 )
 
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+
 from flask_sqlalchemy import SQLAlchemy
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///survey.db"
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DB_URL = os.getenv("DATABASE_URL")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
+
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -370,6 +381,7 @@ def mark_all_notifications_read():
 @app.route("/survey")
 @admin_login_required
 def admin_survey():
+    
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 5, type=int)
 
@@ -385,7 +397,8 @@ def admin_survey():
         "admin/survey.html",
         surveys=pagination.items,
         pagination=pagination,
-        per_page=per_page
+        per_page=per_page,
+        active_page="survey"
     )
 
 @app.route("/admin/notifikasi")
@@ -449,35 +462,27 @@ def upload_profile_photo():
             "error": "Format file tidak didukung"
         }), 400
 
-    # ambil ekstensi asli
-    ext = file.filename.rsplit(".", 1)[1].lower()
+    # =========================
+    # UPLOAD KE CLOUDINARY
+    # =========================
+    upload_result = cloudinary.uploader.upload(
+        file,
+        folder="profile_admin",
+        public_id=f"profile_{session.get('admin_id')}",
+        overwrite=True,
+        resource_type="image"
+    )
 
-    # nama unik (uuid)
-    filename = f"profile_{uuid.uuid4().hex}.{ext}"
+    photo_url = upload_result.get("secure_url")
 
-    upload_folder = os.path.join(app.static_folder, "uploads")
-    os.makedirs(upload_folder, exist_ok=True)
-
-    path = os.path.join(upload_folder, filename)
-    file.save(path)
-
+    # update database
     admin = db.session.get(Admin, session.get("admin_id"))
-
-    # 🔥 hapus foto lama jika bukan default
-    if admin.photo and admin.photo.startswith("/static/uploads/"):
-        old_path = os.path.join(
-            app.root_path,
-            admin.photo.lstrip("/")
-        )
-        if os.path.exists(old_path):
-            os.remove(old_path)
-
-    admin.photo = f"/static/uploads/{filename}"
+    admin.photo = photo_url
     db.session.commit()
 
     return jsonify({
         "success": True,
-        "photo_url": admin.photo
+        "photo_url": photo_url
     })
 
 @app.route("/settings/update", methods=["POST"])
@@ -872,7 +877,8 @@ def detail_survey(survey_id):
         survey=survey,
         responses=responses,
         parsed_questions=parsed_questions,
-        selected_response=selected_response
+        selected_response=selected_response,
+        active_page="survey"
     )
 
 
@@ -1594,4 +1600,4 @@ if __name__ == "__main__":
 
             print("Password admin berhasil direset")
 
-    app.run()
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))

@@ -230,11 +230,9 @@ input, textarea {
     background:
         linear-gradient(
             135deg,
-            rgba(255,179,0,.28),
-            rgba(255,162,0,.25)
+            rgb(255, 196, 58),
+            rgb(255, 182, 55)
         );
-    box-shadow:
-        0 10px 24px rgba(239,68,68,.18);
 }
 
 /* icon */
