@@ -54,41 +54,6 @@
     z-index:2;
 }
 
-/* =========================
-   STATS
-========================= */
-
-.survey-stats{
-    display:flex;
-    gap:14px;
-    margin-top:24px;
-    flex-wrap:wrap;
-    position:relative;
-    z-index:2;
-}
-
-.survey-stat-box{
-    min-width:180px;
-
-    padding:18px 20px;
-
-    border-radius:18px;
-
-    background:#003c22;
-
-    color:white;
-
-    box-shadow:
-        0 8px 20px rgba(0,60,34,.18);
-}
-
-.survey-stat-box.soft{
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    color:#0f172a;
-    box-shadow:none;
-}
-
 .survey-stat-label{
     font-size:13px;
     opacity:.8;
@@ -155,7 +120,7 @@
 }
 
 .survey-stat-box{
-    min-width:190px;
+    min-width:220px;
     padding:22px;
     border-radius:20px;
     background:#003c22;
