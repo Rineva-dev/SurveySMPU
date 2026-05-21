@@ -14,63 +14,47 @@
 <!-- =========================
     STATS
 ========================= -->
-<!-- =========================
-    STATS
-========================= -->
 <div class="stats-grid">
-
     <div class="stat-card stat-green">
-
         <div class="stat-icon green">
             <i data-lucide="clipboard-list"></i>
         </div>
-
         <div class="stat-info">
             <span class="stat-label">Total Survey</span>
-            <h3>{{ total_survey or 0 }}</h3>
+            <h3 id="stat-total-survey">{{ total_survey or 0 }}</h3>
         </div>
-
     </div>
 
     <div class="stat-card stat-gold">
-
         <div class="stat-icon gold">
             <i data-lucide="users"></i>
         </div>
-
         <div class="stat-info">
             <span class="stat-label">Total Responden</span>
-            <h3>{{ total_responden or 0 }}</h3>
+            <h3 id="stat-total-responden">{{ total_responden or 0 }}</h3>
         </div>
-
     </div>
 
     <div class="stat-card stat-emerald">
-
         <div class="stat-icon emerald">
             <i data-lucide="badge-check"></i>
         </div>
-
         <div class="stat-info">
             <span class="stat-label">Survey Aktif</span>
-            <h3>{{ survey_aktif or 0 }}</h3>
+            <h3 id="stat-survey-aktif">{{ survey_aktif or 0 }}</h3>
         </div>
 
     </div>
 
     <div class="stat-card stat-red ">
-
         <div class="stat-icon red">
             <i data-lucide="archive"></i>
         </div>
-
         <div class="stat-info">
             <span class="stat-label">Survey Selesai</span>
-            <h3>{{ survey_selesai or 0 }}</h3>
+            <h3 id="stat-survey-selesai">{{ survey_selesai or 0 }}</h3>
         </div>
-
     </div>
-
 </div>
 
 <!-- =========================
@@ -298,6 +282,46 @@ document.getElementById("surveySelect").addEventListener("change", () => {
 
     loadQuestions();
 });
+
+let lastStats = {
+    total_survey: null,
+    total_responden: null,
+    survey_aktif: null,
+    survey_selesai: null
+};
+
+async function refreshDashboardStats() {
+    try {
+        const res = await fetch("/dashboard/stats");
+        const data = await res.json();
+
+        updateStat("stat-total-survey", "total_survey", data);
+        updateStat("stat-total-responden", "total_responden", data);
+        updateStat("stat-survey-aktif", "survey_aktif", data);
+        updateStat("stat-survey-selesai", "survey_selesai", data);
+
+    } catch (err) {
+        console.log("Gagal refresh stats");
+    }
+}
+
+function updateStat(elementId, key, data) {
+    if (lastStats[key] !== data[key]) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.textContent = data[key];
+        }
+        lastStats[key] = data[key];
+    }
+}
+
+setInterval(() => {
+    if (document.visibilityState === "visible") {
+        refreshDashboardStats();
+    }
+}, 3000);
+
+refreshDashboardStats();
 
 </script>
 

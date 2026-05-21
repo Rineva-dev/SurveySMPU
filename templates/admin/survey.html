@@ -280,15 +280,48 @@ function showToast(message = "Link berhasil disalin") {
 
 function copyLink() {
     const input = document.getElementById("shareLink");
-    input.select();
-    input.setSelectionRange(0, 99999);
+    const text = input.value;
 
-    navigator.clipboard.writeText(input.value).then(() => {
-        showToast();
-    });
+    // ✅ Jika Clipboard API tersedia (HTTPS / localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                afterCopySuccess();
+            })
+            .catch(() => {
+                fallbackCopy(text);
+            });
+    } else {
+        // 🔁 Fallback untuk HTTP / IP
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+        document.execCommand("copy");
+        afterCopySuccess();
+    } catch (err) {
+        alert("Gagal menyalin link");
+    }
+
+    document.body.removeChild(textarea);
+}
+
+function afterCopySuccess() {
+    showToast();
 
     const btn = document.querySelector(".copy-btn");
     btn.innerHTML = "✓";
+
     setTimeout(() => {
         btn.innerHTML = '<i data-lucide="copy"></i>';
         lucide.createIcons();

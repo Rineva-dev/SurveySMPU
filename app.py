@@ -18,7 +18,8 @@ from functools import wraps
 import cloudinary
 import cloudinary.uploader
 
-load_dotenv()
+if os.getenv("FLASK_ENV") != "production":
+    load_dotenv()
 
 def format_date(date_str):
     return datetime.strptime(date_str, "%Y-%m-%d").strftime("%d-%m-%Y")
@@ -37,17 +38,33 @@ def admin_login_required(f):
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(32).hex())
+
+ENV = os.getenv("FLASK_ENV", "development")
+
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+app.config["UPLOAD_FOLDER"] = "static/uploads"
+
+if ENV == "production":
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=True
+    )
+else:
+    # LOCAL / VS CODE
+    app.config.update(
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=False
+    )
+
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 app.jinja_env.globals.update(format_date=format_date)
 
-app.config.update(
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=True
-)
 
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -60,12 +77,15 @@ from flask_sqlalchemy import SQLAlchemy
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DB_URL = os.getenv("DATABASE_URL")
+DB_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///instance/survey.db"
+)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+os.makedirs("instance", exist_ok=True)
 
 db = SQLAlchemy(app)
 
@@ -213,6 +233,9 @@ def inject_admin():
 
     return dict(admin=admin)
 
+with app.app_context():
+    db.create_all()
+
 # -----------------------------
 # LOGIN ADMIN
 # -----------------------------
@@ -273,6 +296,30 @@ def admin_dashboard():
         survey_aktif=survey_aktif,
         active_page="dashboard"
     )
+
+@app.route("/dashboard/stats")
+@admin_login_required
+def dashboard_stats():
+
+    total_survey = Survey.query.count()
+
+    total_responden = SurveyResponse.query.count()
+
+    survey_aktif = Survey.query.filter_by(
+        is_active=True
+    ).count()
+
+    # survey selesai = tidak aktif
+    survey_selesai = Survey.query.filter_by(
+        is_active=False
+    ).count()
+
+    return jsonify({
+        "total_survey": total_survey,
+        "total_responden": total_responden,
+        "survey_aktif": survey_aktif,
+        "survey_selesai": survey_selesai
+    })
 
 @app.route('/dashboard/chart-data/<int:survey_id>/<int:q_index>')
 def dashboard_chart_data(survey_id, q_index):
