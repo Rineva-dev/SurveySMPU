@@ -362,7 +362,7 @@ input, textarea {
 }
 
 /* ======================================
-   SEARCH
+    SEARCH
 ====================================== */
 .header-search{
     position:relative;
@@ -570,7 +570,7 @@ input, textarea {
 }
 
 /* =========================
-   GLOBAL LOADING
+    GLOBAL LOADING
 ========================= */
 
 .global-loading {
@@ -646,44 +646,44 @@ input, textarea {
 }
 
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
 .modal-overlay.hidden {
-  display: none;
+    display: none;
 }
 
 .modal-box {
-  background: #fff;
-  width: 90%;
-  max-width: 420px;
-  border-radius: 14px;
-  padding: 24px;
-  text-align: center;
-  animation: scaleIn 0.25s ease;
+    background: #fff;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    animation: scaleIn 0.25s ease;
 }
 
 .modal-box h3 {
-  margin: 0 0 10px;
-  font-size: 20px;
+    margin: 0 0 10px;
+    font-size: 20px;
 }
 
 .modal-box p {
-  font-size: 15px;
-  color: #555;
+    font-size: 15px;
+    color: #555;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
 }
 
 .btn-ok {
@@ -715,8 +715,8 @@ input, textarea {
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
 .empty-chart {
@@ -896,7 +896,6 @@ input, textarea {
 /* =========================
     SEARCH DROPDOWN
 ========================= */
-
 .header-search{
     position: relative;
 }
@@ -906,14 +905,11 @@ input, textarea {
     top: 54px;
     left: 0;
     right: 0;
-
     background: #fff;
     border-radius: 14px;
     box-shadow: 0 15px 35px rgba(0,0,0,.12);
-
     overflow: hidden;
     z-index: 9999;
-
     max-height: 320px;
     overflow-y: auto;
 }
@@ -952,7 +948,6 @@ input, textarea {
 /* ======================================
     PROFILE DROPDOWN
 ====================================== */
-
 .admin-profile-wrapper{
     position:relative;
 }
@@ -961,14 +956,11 @@ input, textarea {
     display:flex;
     align-items:center;
     gap:12px;
-
     border:none;
     background:transparent;
     cursor:pointer;
-
     padding:6px 10px;
     border-radius:14px;
-
     transition:.25s ease;
 }
 
@@ -1011,20 +1003,14 @@ input, textarea {
     position:absolute;
     top:60px;
     right:0;
-
-    width:240px;
-
+    width:220px;
     background:#fff;
     border-radius:18px;
-
     border:1px solid #e2e8f0;
-
     box-shadow:
         0 20px 40px rgba(0,0,0,.12);
-
     overflow:hidden;
     z-index:9999;
-
     animation:profileDropdown .2s ease;
 }
 

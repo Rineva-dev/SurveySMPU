@@ -693,13 +693,11 @@ document.addEventListener("click", async function (e) {
 async function loadNotifications(forceRender = false) {
 
     const list = document.getElementById("notifList");
-
     const res = await fetch("/admin/notifikasi");
     const data = await res.json();
 
     // kosong
     if (data.length === 0) {
-
         if (forceRender || list.children.length !== 1) {
             list.innerHTML = `
                 <div class="notif-empty">
@@ -707,14 +705,12 @@ async function loadNotifications(forceRender = false) {
                 </div>
             `;
         }
-
         return;
     }
 
     // =========================
     // AMBIL ID TERBARU DI DOM
     // =========================
-
     const existingIds = Array.from(
         document.querySelectorAll(".notif-item")
     ).map(el => el.dataset.id);
@@ -722,7 +718,6 @@ async function loadNotifications(forceRender = false) {
     // =========================
     // TAMBAH HANYA NOTIF BARU
     // =========================
-
     data.reverse().forEach(n => {
 
         if (existingIds.includes(String(n.id))) {
@@ -733,7 +728,6 @@ async function loadNotifications(forceRender = false) {
 
         item.className = `notif-item ${n.is_read ? "" : "unread"}`;
         item.dataset.id = n.id;
-
         item.style.opacity = "0";
         item.style.transform = "translateY(-8px)";
         item.style.transition = "all .25s ease";
@@ -749,7 +743,6 @@ async function loadNotifications(forceRender = false) {
 
             <div class="notif-footer">
                 <div class="notif-time">${n.time}</div>
-
                 <button
                     class="notif-delete"
                     data-id="${n.id}"
@@ -770,6 +763,7 @@ async function loadNotifications(forceRender = false) {
         });
     });
 }
+
 document.addEventListener("click", async (e) => {
     const link = e.target.closest(".notif-link");
     if (!link) return;
@@ -846,15 +840,12 @@ if (searchInput && searchDropdown) {
         );
 
         if (results.length === 0) {
-
             searchDropdown.innerHTML = `
                 <div class="search-empty">
                     Survey tidak ditemukan
                 </div>
             `;
-
             searchDropdown.classList.remove("hidden");
-
             return;
         }
 
