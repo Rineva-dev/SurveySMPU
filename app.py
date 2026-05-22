@@ -42,7 +42,7 @@ app.secret_key = os.getenv("SECRET_KEY", os.urandom(32).hex())
 ENV = os.getenv("FLASK_ENV", "development")
 
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 if ENV == "production":
@@ -60,7 +60,7 @@ else:
     )
 
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 app.jinja_env.globals.update(format_date=format_date)
